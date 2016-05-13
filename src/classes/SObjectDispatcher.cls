@@ -99,7 +99,7 @@ global virtual class SObjectDispatcher {
      * @return         
      */
     global virtual void execute(String context){
-        if(!TriggerPanel.getBreaker(typeName)){
+        if(TriggerPanel.getBreaker(typeName) == false){
             System.debug('Breaker for ' + typeName + ' set to false. Skipping execution of ' + context + '.');
             return;
         }

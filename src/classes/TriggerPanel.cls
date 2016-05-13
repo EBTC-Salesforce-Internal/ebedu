@@ -96,4 +96,24 @@ global class TriggerPanel {
         panel.AfterDelete__c = active;
         panel.AfterUndelete__c = active;
     }
+    
+    /**
+     * Removes the EB_TriggerPanel record for the given typeName from the cached map of panels.
+     *
+     * @param  typeName The string value of the object type with all '_' characters removed.
+     * @return
+     */
+    global static void reset(String typeName){
+        panelMap.remove(typeName);
+    }
+    
+    /**
+     * Resets the map of EB_TriggerPanel records to only those found in the database.
+     *
+     * @param  typeName The string value of the object type with all '_' characters removed.
+     * @return
+     */
+    global static void resetAll(){
+        panelMap = null;
+    }
 }

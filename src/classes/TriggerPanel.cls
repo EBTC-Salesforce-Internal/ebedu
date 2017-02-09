@@ -1,21 +1,63 @@
 global class TriggerPanel {
 
+    /**
+     * Private variable that controls global trigger execution. May only be set or
+     * edited via code. The primary use case is test data loading.
+     */
+    @testVisible
+    private static Boolean mainSwitch = true;
+    
+    
+    /**
+     * Private variable that maintains the panel settings during the execution context.
+     */
     @testVisible
     private static Map<String, Trigger_Panel__c> panelMap;
+    
+    /*
+     * Private variable that maintains the previous status of switches and breakers 
+     * (caputred during set method call).
+     */    
+    @testVisible
+    private static Map<String, Boolean> stateHistory= new Map<String, Boolean>();
+    
+    /**
+     * Global accessor for the main switch. This controls the execution of all triggers collectively. 
+     */
+    global static Boolean getMainBreaker(){
+        return mainSwitch;
+    }
+    
+    /*
+     * Global settor for the main switch. This controls the execution of all triggers collectively.
+     */
+    global static void setMainBreaker(Boolean active){
+        setPriorStatus('Main', null, getMainBreaker());
+        mainSwitch = active;
+    }
+    
+    /**
+     * Global method for reverting the main switch the the immediately previous value. Defaults to true. 
+     */
+    global static void revertMainBreaker(){
+        setMainBreaker(getPriorStatus('Main', null));
+    }
     
     /**
      * Global accessor for single TriggerPanel records. If no record is found, a default
      * is created with breaker and switches set to true.
      */
     global static Trigger_Panel__c getPanel(String typeName){
-        if(getAllPanels().containsKey(typeName) == false){
-            Trigger_Panel__c panel = new Trigger_Panel__c();
-            panel.Name = typeName;
-            panel.Breaker__c = true;
-            getAllPanels().put(typeName, panel);
-            setAllSwitches(typeName, true);
+        Map<String, Trigger_Panel__c> panels = getAllPanels();
+        if(panels.containsKey(typeName) == false){
+            Trigger_Panel__c panel = Trigger_Panel__c.getValues(typeName);
+            if(panel == null){
+                panel = (Trigger_Panel__c) Trigger_Panel__c.sObjectType.newSObject(null, true);
+            	panel.Name = typeName;
+            	panels.put(typeName, panel);    
+            }
         }
-        return getAllPanels().get(typeName);
+        return panels.get(typeName);
     }
 
     /**
@@ -49,11 +91,21 @@ global class TriggerPanel {
      * @param  typeName The string value of the object type with all '_' characters removed.
      * @param  context  The trigger context value with no spaces.  For example, 'beforeInsert'.
      * @param  active   The desired value to set.
+     * 
+     * @return 			The prior value of the switch.
      */
     global static void setSwitch(String typeName, String context, Boolean active){
-        getPanel(typeName).put(context + '__c', active);
+        Boolean priorValue = (Boolean) getPanel(typeName).put(context + '__c', active);
+        setPriorStatus(typeName, context, priorValue);
     }
 
+    /*
+     * Global method for reverting a context switch to the immediately previous value. Defaults to true.
+     */
+    global static void revertSwitch(String typeName, String context){
+        setSwitch(typeName, context, getPriorStatus(typeName, context));
+    }
+    
     /**
      * Returns the breaker value of the EB_TriggerPanel record.
      *
@@ -73,9 +125,17 @@ global class TriggerPanel {
      * @param  active   The desired value to set.
      */
     global static void setBreaker(String typeName, Boolean active){
-        getPanel(typeName).Breaker__c = active;
+        Boolean priorValue = (Boolean) getPanel(typeName).put('Breaker__c', active);
+        setPriorStatus(typeName, null, priorValue);
     }
 
+    /*
+     * Global method for reverting a breaker to the immediately previous value. Defaults to true.
+     */
+    global static void revertBreaker(String typeName){
+        setBreaker(typeName, getPriorStatus(typeName, null));
+    }
+    
     /**
      * Sets the related value of the EB_TriggerPanel record for all contexts. If there is no 
      * record in the database for this sObject type, a temporary record (all options set to 
@@ -87,13 +147,66 @@ global class TriggerPanel {
      * @return          The return value indicates successful update (this transaction only).
      */
     global static void setAllSwitches(String typeName, Boolean active){
-        Trigger_Panel__c panel = getPanel(typeName);
-        panel.BeforeInsert__c = active;
-        panel.AfterInsert__c = active;
-        panel.BeforeUpdate__c = active;
-        panel.AfterUpdate__c = active;
-        panel.BeforeDelete__c = active;
-        panel.AfterDelete__c = active;
-        panel.AfterUndelete__c = active;
+        setSwitch(typeName, 'BeforeInsert', active);
+		setSwitch(typeName, 'AfterInsert', active);
+        setSwitch(typeName, 'BeforeUpdate', active);
+        setSwitch(typeName, 'AfterUpdate', active);
+        setSwitch(typeName, 'BeforeDelete', active);
+        setSwitch(typeName, 'AfterDelete', active);
+        setSwitch(typeName, 'AfterUndelete', active);
+    }
+    
+    /**
+     * Global method for accessing the prior state of a switch. This method does not remove
+     * or change the prior status recorded.
+     */
+    global static Boolean getPriorStatus(String typeName, String context){
+        Boolean priorValue = stateHistory.get(buildKey(typeName, context));
+        if(priorValue == null){
+            Trigger_Panel__c panel = Trigger_Panel__c.getValues(typeName);
+            if(panel != null){
+                priorValue = (Boolean) panel.get(context + '__c');
+            }else{
+                priorValue = true;
+            }
+        }
+        return priorValue;
+    }
+    
+    /**
+     * Global method for saving the prior state of a switch or breaker.
+     */
+    global static void setPriorStatus(String typeName, String context, Boolean active){
+        stateHistory.put(buildKey(typeName, context), active);
+    }
+    
+    /*
+     * Private method that converts the typeName and context into the history map key. 
+     */
+    private static String buildKey(String typeName, String context){
+        if(context == null || context == ''){
+            return typeName;
+        }
+        return typeName + '_' + context;
+    }
+    
+    /**
+     * Removes the EB_TriggerPanel record for the given typeName from the cached map of panels.
+     *
+     * @param  typeName The string value of the object type with all '_' characters removed.
+     * @return
+     */
+    global static void reset(String typeName){
+        getAllPanels().remove(typeName);
+    }
+    
+    /**
+     * Resets the map of EB_TriggerPanel records to only those found in the database.
+     *
+     * @param  typeName The string value of the object type with all '_' characters removed.
+     * @return
+     */
+    global static void resetAll(){
+        panelMap = null;
     }
 }

@@ -271,4 +271,57 @@ public class TriggerPanelTest {
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterDelete'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterUndelete'));
     }
+    
+    /**
+     * Testing the 'Reset' function with a single value in cache
+     *
+     * Expected behavior: All switches will be reset to the default true
+     */
+    @isTest
+    public static void testReset(){
+        TriggerPanel.setAllSwitches('Account', false);
+        
+        Test.startTest();
+        TriggerPanel.reset('Account');
+        Test.stopTest();
+        
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeInsert'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeUpdate'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUpdate'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeDelete'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterDelete'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUndelete'));
+    }
+    
+    /**
+     * Testing the 'Reset' function with a no values in cache
+     *
+     * Expected behavior: No exception thrown
+     */
+    @isTest
+    public static void testResetNull(){
+        Test.startTest();
+        TriggerPanel.reset('Account');
+        Test.stopTest();
+        
+        //Successful if no error thrown
+        System.assert(true);
+    }
+    
+    /**
+     * Testing the 'ResetAll' function with a value in cache
+     *
+     * Expected behavior: No exception thrown
+     */
+    @isTest
+    public static void testResetAll(){
+        TriggerPanel.setBreaker('Account', false);
+        
+        Test.startTest();
+        TriggerPanel.resetAll();
+        Test.stopTest();
+        
+        System.assertEquals(null, TriggerPanel.panelMap);
+    }
 }

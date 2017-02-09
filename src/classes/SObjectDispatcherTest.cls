@@ -77,11 +77,17 @@ public class SObjectDispatcherTest {
         Map<Id, Trigger_Panel__c> panelMap = new Map<Id, Trigger_Panel__c>();
         panelMap.putAll(TriggerPanel.getAllPanels().values());
 
+        Exception ex;
+
         Test.startTest();
-        SObjectDispatcher dispatch = SObjectDispatcher.init(panelMap.values(), null);
+        try{
+            SObjectDispatcher dispatch = SObjectDispatcher.init(panelMap.values(), null);
+        }catch(Exception e){
+            ex = e;
+        }
         Test.stopTest();
 
-        System.assertEquals(null, dispatch);
+        System.assertNotEquals(null, ex);
     }
 
     /**

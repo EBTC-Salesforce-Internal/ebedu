@@ -11,7 +11,7 @@ global virtual class SObjectDispatcher {
      * @param newList    A list of SObjects typically the Trigger.newList values.
      * @param oldMap     A map of SObjects typically equivalent to the Trigger.oldMap values.
      */
-    public void initData(String typeName, List<SObject> newList, Map<Id, SObject> oldMap){
+    private void initData(String typeName, List<SObject> newList, Map<Id, SObject> oldMap){
         this.typeName = typeName;
         this.newList = newList;
         this.oldMap = oldMap;
@@ -99,10 +99,16 @@ global virtual class SObjectDispatcher {
      * @return         
      */
     global virtual void execute(String context){
+        if(TriggerPanel.getMainBreaker() == false){
+            System.debug('Main breaker set to false. Skipping all trigger executions.');
+            return;
+        }
+        
         if(TriggerPanel.getBreaker(typeName) == false){
             System.debug('Breaker for ' + typeName + ' set to false. Skipping execution of ' + context + '.');
             return;
         }
+        
         System.debug('Beginning execution of ' + context + ' handler.');
         try{
 
@@ -137,15 +143,11 @@ global virtual class SObjectDispatcher {
 
             this.andFinally();
         }catch(Exception ex){
-            if(newList != null){
-                for(SObject item:newList){
-                  item.addError(ex.getMessage());
-                }
+            if(context.contains('Delete') == false){
+                SObjectDispatcher.handleException(typeName, ex, newList);
+            }else{
+                SObjectDispatcher.handleException(typeName, ex, oldMap.values());
             }
-            
-            System.debug(ex.getTypeName() + ':' + ex.getLineNumber());
-            System.debug(ex.getCause());
-            System.debug(ex.getStackTraceString());
         }
     }
 
@@ -161,10 +163,12 @@ global virtual class SObjectDispatcher {
      */
     global static SObjectDispatcher init(List<SObject> newList, Map<Id, SObject> oldMap){
         String typeName;
-        if(newList != null && newList.size() > 0){
-            typeName = newList[0].getSObjectType().getDescribe().getName();
-        }else if(oldMap != null && oldMap.values().size() > 0){
-            typeName = oldMap.values()[0].getSObjectType().getDescribe().getName();
+        EBEDU__Settings__c settings = EBEDU__Settings__c.getInstance();
+
+        if(newList != null){
+            typeName = newList.getSObjectType().getDescribe().getName();
+        }else if(oldMap != null){
+            typeName = oldMap.getSObjectType().getDescribe().getName();
         }else{
             typeName = '';
         }
@@ -173,7 +177,7 @@ global virtual class SObjectDispatcher {
 
         try{
             System.debug('Type Name = ' + typeName);
-            System.Type t = Type.forName('EB_' + typeName + 'Dispatcher');
+            System.Type t = Type.forName(settings.EBEDU__Dispatcher_Prefix__c + typeName + 'Dispatcher');
             if(t == null){
                 if(typeName == 'EBEDUTriggerPanelc'){
                     throw new SObjectException('Triggers are not supported on EBEDUTriggerPanelc object');
@@ -186,11 +190,52 @@ global virtual class SObjectDispatcher {
             dispatch.initData(typeName, newList, oldMap);
             return dispatch;
         }catch(Exception ex){
-            System.debug(ex.getTypeName() + ':' + ex.getLineNumber());
-            System.debug(ex.getCause());
-            System.debug(ex.getStackTraceString());
+            if(settings.EBEDU__View_Detailed_Exceptions__c == false){
+                ex.setMessage('An exception occurred during dispatcher initialization. Please contact your system administrator.');
+            }
+            throw ex;
         }
 
         return null;
+    }
+
+    /**
+     * This method handles how exceptions are displayed to the user, whether they are 
+     * simplified or fully displayed.
+     *
+     * @param  typeName The type of object the DML was acting on when the exception was thrown.
+     * @param  ex  The exception thrown by the code.
+     * @param  objects  The list of sObjects, typically the newList. If in delete context, the old list.
+     * @return
+     **/
+    private static void handleException(String typeName, Exception ex, List<SObject> objects){
+        EBEDU__Settings__c settings = EBEDU__Settings__c.getInstance();
+        if(settings.EBEDU__View_Detailed_Exceptions__c == false){
+            if(ex.getTypeName() == 'System.DmlException'){
+                DmlException dmlEx = (DmlException) ex;
+                for(Integer i = 0; i < ex.getNumDml(); i ++){
+                    Integer index = ex.getDmlIndex(i);
+                    String errorString = '';
+                    errorString += ex.getDmlType(i) + ':';
+                    errorString += ex.getDmlMessage(i);
+                    if(ex.getDmlFieldNames(i).isEmpty() == false){
+                        errorString += ' [' + typeName + '.' + String.join(ex.getDmlFieldNames(i),',') + ']';
+                    }
+                    errorString += ' on row ' + index + '.';
+                    errorString += ' This error may be from an internal automation. If error persists, please contact your system administrator.';
+                    if(Test.isRunningTest() == false){
+                        objects[index].addError(errorString);
+                    }
+                }
+            }else{
+                for(SObject obj:objects){
+                    if(Test.isRunningTest() == false){
+                        obj.addError('An exception has occurred while saving a record. If error persists, please contact your system administrator.');
+                    }
+                }
+            }
+        }else{
+            throw ex;
+        }
     }
 }

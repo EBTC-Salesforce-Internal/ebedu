@@ -4,7 +4,8 @@
 The EDU Trigger Framework is an object-oriented trigger framework for simplifying and controlling trigger execution. EDU stands for Event-Dispatcher-Utility and is heavily influenced by Andy Fawcett (FinancialForce) and Robert Nunemaker (Citrix) during their 2014 Dreamforce presentations.
 
 Simply put, the layers translate as follows:
-* **Event**:The capture of the event and hand-off to the dispatcher.
+
+* **Event** :The capture of the event and hand-off to the dispatcher.
 * **Dispatcher**:The handling of the event and coordination of multiple actions required to properly handle the event.
 * **Utility**:The re-usable actions that are required to properly handle the event.
 

@@ -191,11 +191,22 @@ A level of default error handling is built into the framework by default. This h
 
 ## Trigger Panel ##
 
-The trigger panel provides admin-configurable control of trigger execution.
+The trigger panel provides admin-configurable control of trigger execution. There are hooks to control all triggers simultaneously, each trigger individually, or each context individually. These are the Main Switch, Breaker, and Switch elements individually. Each of these elements have three methods: set, get, and revert. There is also the ability to reset panels back to their original state. If no specific definition is found for the state of a panel, all values are assumed to be true.
 
 ### Admin Configuration ###
+
+An administrator is able to configure the initial state of the breakers and switches by editing the EBEDU.TriggerPanel custom setting. The name of the custom setting record should be the sObject name following the same naming convention as the dispatcher (removing all '_' characters). There is no way to set the main switch as an admin.
+
 ### Main Switch ###
+
+The main switch is only editable via apex.
+
 ### Breakers ###
 ### Switches ###
 ### Revert Functions ###
+
+Revert function return the status of a switch or breaker back to the *immediate* prior status. It does not keep a history stack in any way.
+
 ### Reset Functions ###
+
+The reset function returns a value to its initial state. If an initial state is undefined, it defaults to true.

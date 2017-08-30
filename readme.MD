@@ -38,28 +38,28 @@ In the EDU framework, triggers only handle enough logic in order to 'hand-off' t
 ```
 #!Apex
 
-trigger {{ trigger_name }} on {{ object_name }} (before insert, before update, 	before delete,
-                                                 after insert, 	after update, 	after delete, 	after undelete) {
+trigger {{ trigger_name }} on {{ object_name }} (before insert, before update,  before delete,
+                                                 after insert,  after update,   after delete,   after undelete) {
 
-	//Initialize the dispatcher
-	EBEDU.SObjectDispatcher dispatch = EBEDU.SObjectDispatcher.init(Trigger.new, Trigger.oldMap);
+    //Initialize the dispatcher
+    EBEDU.SObjectDispatcher dispatch = EBEDU.SObjectDispatcher.init(Trigger.new, Trigger.oldMap);
 
-	//Execute the appropriate dispatch method.
-	if (dispatch != null) {
-		if (Trigger.isBefore) {
-			if (Trigger.isInsert) { dispatch.execute('beforeInsert'); }
-			if (Trigger.isUpdate) { dispatch.execute('beforeUpdate'); }
-			if (Trigger.isDelete) { dispatch.execute('beforeDelete'); }
-		}
-		if (Trigger.isAfter) {
-			if (Trigger.isInsert) { dispatch.execute('afterInsert'); }
-			if (Trigger.isUpdate) { dispatch.execute('afterUpdate'); }
-			if (Trigger.isDelete) { dispatch.execute('afterDelete'); }
-			if (Trigger.isUndelete) { dispatch.execute('afterUndelete'); }
-		}
-	} else {
-		System.debug('No dispatcher found.');
-	}
+    //Execute the appropriate dispatch method.
+    if (dispatch != null) {
+        if (Trigger.isBefore) {
+            if (Trigger.isInsert) { dispatch.execute('beforeInsert'); }
+            if (Trigger.isUpdate) { dispatch.execute('beforeUpdate'); }
+            if (Trigger.isDelete) { dispatch.execute('beforeDelete'); }
+        }
+        if (Trigger.isAfter) {
+            if (Trigger.isInsert) { dispatch.execute('afterInsert'); }
+            if (Trigger.isUpdate) { dispatch.execute('afterUpdate'); }
+            if (Trigger.isDelete) { dispatch.execute('afterDelete'); }
+            if (Trigger.isUndelete) { dispatch.execute('afterUndelete'); }
+        }
+    } else {
+        System.debug('No dispatcher found.');
+    }
 }
 ```
 
@@ -118,10 +118,10 @@ global class {{ dispatcher_name }} extends EBEDU.SObjectDispatcher {
      * @return A list containing the new {{ object_name }} objects.
      */
     public List<{{ object_name }}> getNewList(){
-    	if(newList != null){
-    		return (List<{{ object_name }}>) newList;
-    	}
-    	return null;
+        if(newList != null){
+            return (List<{{ object_name }}>) newList;
+        }
+        return null;
     }
 
     /**
@@ -130,12 +130,12 @@ global class {{ dispatcher_name }} extends EBEDU.SObjectDispatcher {
      * @return A map containing the old {{ object_name }} objects by Id.
      */
     public Map<Id, {{ object_name }}> getOldMap(){
-    	if(oldMap != null){
-	    	Map<Id, {{ object_name }}> oMap = new Map<Id, {{ object_name }}>();
+        if(oldMap != null){
+            Map<Id, {{ object_name }}> oMap = new Map<Id, {{ object_name }}>();
             oMap.putAll( (List<{{ object_name }}>) oldMap.values());
             return oMap;
-    	}
-    	return null;
+        }
+        return null;
     }
 
     /**
@@ -144,12 +144,12 @@ global class {{ dispatcher_name }} extends EBEDU.SObjectDispatcher {
      * @return A map containing the new {{ object_name }} objects by Id.
      */
     public Map<Id, {{ object_name }}> getNewMap(){
-    	if(newList != null){
-    		Map<Id, {{ object_name }}> newMap = new Map<Id, {{ object_name }}>();
-			newMap.putAll(getNewList()); 
-    		return  newMap;
-    	}
-    	return null;
+        if(newList != null){
+            Map<Id, {{ object_name }}> newMap = new Map<Id, {{ object_name }}>();
+            newMap.putAll(getNewList()); 
+            return  newMap;
+        }
+        return null;
     }
 
 }
@@ -161,25 +161,25 @@ global class {{ dispatcher_name }} extends EBEDU.SObjectDispatcher {
 @isTest
 public class {{ test_class_name }} {
 
-	@isTest
-	public static void testUtilityMethodsValid(){
-		{{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
-		dispatch.newList = new List<{{ object_name }}>();
-		dispatch.oldMap = new Map<Id, {{ object_name }}>();
+    @isTest
+    public static void testUtilityMethodsValid(){
+        {{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
+        dispatch.newList = new List<{{ object_name }}>();
+        dispatch.oldMap = new Map<Id, {{ object_name }}>();
 
-		dispatch.getNewList();
-		dispatch.getNewMap();
-		dispatch.getOldMap();
-	}
+        dispatch.getNewList();
+        dispatch.getNewMap();
+        dispatch.getOldMap();
+    }
 
-	@isTest
-	public static void testUtilityMethodsNull(){
-		{{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
+    @isTest
+    public static void testUtilityMethodsNull(){
+        {{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
 
-		dispatch.getNewList();
-		dispatch.getNewMap();
-		dispatch.getOldMap();
-	}
+        dispatch.getNewList();
+        dispatch.getNewMap();
+        dispatch.getOldMap();
+    }
 
 }
 
@@ -191,15 +191,42 @@ A level of default error handling is built into the framework by default. This h
 
 ## Trigger Panel ##
 
-The trigger panel provides admin-configurable control of trigger execution. There are hooks to control all triggers simultaneously, each trigger individually, or each context individually. These are the Main Switch, Breaker, and Switch elements individually. Each of these elements have three methods: set, get, and revert. There is also the ability to reset panels back to their original state. If no specific definition is found for the state of a panel, all values are assumed to be true.
+The trigger panel provides admin-configurable control of trigger execution. There are hooks to control all triggers simultaneously, each trigger individually, or each context individually. These are the Main Breaker, Breaker, and Switch elements individually. Each of these elements have three methods: set, get, and revert. There is also the ability to reset panels back to their original state. If no specific definition is found for the state of a panel, all values are assumed to be true.
 
 ### Admin Configuration ###
 
-An administrator is able to configure the initial state of the breakers and switches by editing the EBEDU.TriggerPanel custom setting. The name of the custom setting record should be the sObject name following the same naming convention as the dispatcher (removing all '_' characters). There is no way to set the main switch as an admin.
+An administrator is able to configure the initial state of the breakers and switches by editing the EBEDU.TriggerPanel custom setting. The name of the custom setting record should be the sObject name following the same naming convention as the dispatcher (removing all '_' characters). There is no way to set the main breaker as an admin.
 
-### Main Switch ###
+### Main Breaker ###
 
-The main switch is only editable via apex.
+The main breaker is only editable via apex.
+
+Turning off the main breaker disables all triggers.
+
+```
+#!Apex
+//Turn off main breaker
+TriggerPanel.setMainBreaker(false);
+
+```
+
+The main breaker can also be turned back on
+
+```
+#!Apex
+//Turn on main breaker
+TriggerPanel.setMainBreaker(true);
+
+```
+
+And reverted
+
+```
+#!Apex
+//Revert main breaker
+TriggerPanel.revertMainBreaker(true);
+
+```
 
 ### Breakers ###
 ### Switches ###

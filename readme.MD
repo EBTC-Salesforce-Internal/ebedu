@@ -19,7 +19,14 @@ When looked at this way, it becomes easier to view the logic and identify what e
 
 ### Managed Package ###
 
-A managed package version is available at the following url [https://login.salesforce.com/packaging/installPackage.apexp?p0=04t36000000H66s]. This installs both the SObjectDispatcher and the TriggerPanel with their supporting settings. These are in the EBEDU namespace. 
+A managed package version is available at the following url [https://login.salesforce.com/packaging/installPackage.apexp?p0=04t36000000H66s]. To install via Salesforce DX, run the following command
+
+```
+#!Command Line
+sfdx force:package:install -i 04t36000000H66s -u <alias or username>
+```
+
+This installs both the SObjectDispatcher and the TriggerPanel with their supporting settings. These are in the EBEDU namespace. 
 
 Once installed, configure the EBEDU.Settings__c org-wide default record. On this record, set your dispatcher prefix. This is a way to help organize your code in a more usable way. Internally, your default is 'EB_'. You may also want to configure a record for your user or profile to view detailed error messages. This passes through the actual error thrown directly to the user, rather than presenting a simplified message to the user (see Error Handling).
 

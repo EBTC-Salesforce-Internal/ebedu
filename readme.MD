@@ -213,7 +213,7 @@ Turning off the main breaker disables all triggers.
 ```
 #!Apex
 //Turn off main breaker
-TriggerPanel.setMainBreaker(false);
+EBEDU.TriggerPanel.setMainBreaker(false);
 
 ```
 
@@ -222,7 +222,7 @@ The main breaker can also be turned back on
 ```
 #!Apex
 //Turn on main breaker
-TriggerPanel.setMainBreaker(true);
+EBEDU.TriggerPanel.setMainBreaker(true);
 
 ```
 
@@ -231,7 +231,7 @@ And reverted
 ```
 #!Apex
 //Revert main breaker
-TriggerPanel.revertMainBreaker(true);
+EBEDU.TriggerPanel.revertMainBreaker(true);
 
 ```
 

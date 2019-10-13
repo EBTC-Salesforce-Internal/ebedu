@@ -163,7 +163,7 @@ global virtual class SObjectDispatcher {
      */
     global static SObjectDispatcher init(List<SObject> newList, Map<Id, SObject> oldMap){
         String typeName;
-        EBEDU__Settings__c settings = EBEDU__Settings__c.getInstance();
+        Trigger_Configuration__mdt settings = SObjectDispatcher.getConfiguration('Default');
 
         if(newList != null){
             typeName = newList.getSObjectType().getDescribe().getName();
@@ -177,7 +177,7 @@ global virtual class SObjectDispatcher {
 
         try{
             System.debug('Type Name = ' + typeName);
-            System.Type t = Type.forName(settings.EBEDU__Dispatcher_Prefix__c + typeName + 'Dispatcher');
+            System.Type t = Type.forName(settings.Namespace_Prefix__c + typeName + 'Dispatcher');
             if(t == null){
                 if(typeName == 'EBEDUTriggerPanelc'){
                     throw new SObjectException('Triggers are not supported on EBEDUTriggerPanelc object');
@@ -190,13 +190,21 @@ global virtual class SObjectDispatcher {
             dispatch.initData(typeName, newList, oldMap);
             return dispatch;
         }catch(Exception ex){
-            if(settings.EBEDU__View_Detailed_Exceptions__c == false){
-                ex.setMessage('An exception occurred during dispatcher initialization. Please contact your system administrator.');
-            }
+            // if(settings.EBEDU__View_Detailed_Exceptions__c == false){
+            //     ex.setMessage('An exception occurred during dispatcher initialization. Please contact your system administrator.');
+            // }
             throw ex;
         }
+    }
 
-        return null;
+    private static Trigger_Configuration__mdt getConfiguration(String configurationName){
+        Trigger_Configuration__mdt config = [ SELECT  Id, DeveloperName, Namespace_Prefix__c 
+                                            FROM    Trigger_Configuration__mdt 
+                                            WHERE   DeveloperName = :configurationName];
+
+        config.Namespace_Prefix__c = config.Namespace_Prefix__c == null ? '' : config.Namespace_Prefix__c;
+
+        return config;
     }
 
     /**
@@ -209,33 +217,33 @@ global virtual class SObjectDispatcher {
      * @return
      **/
     private static void handleException(String typeName, Exception ex, List<SObject> objects){
-        EBEDU__Settings__c settings = EBEDU__Settings__c.getInstance();
-        if(settings.EBEDU__View_Detailed_Exceptions__c == false){
-            if(ex.getTypeName() == 'System.DmlException'){
-                DmlException dmlEx = (DmlException) ex;
-                for(Integer i = 0; i < ex.getNumDml(); i ++){
-                    Integer index = ex.getDmlIndex(i);
-                    String errorString = '';
-                    errorString += ex.getDmlType(i) + ':';
-                    errorString += ex.getDmlMessage(i);
-                    if(ex.getDmlFieldNames(i).isEmpty() == false){
-                        errorString += ' [' + typeName + '.' + String.join(ex.getDmlFieldNames(i),',') + ']';
-                    }
-                    errorString += ' on row ' + index + '.';
-                    errorString += ' This error may be from an internal automation. If error persists, please contact your system administrator.';
-                    if(Test.isRunningTest() == false){
-                        objects[index].addError(errorString);
-                    }
-                }
-            }else{
-                for(SObject obj:objects){
-                    if(Test.isRunningTest() == false){
-                        obj.addError('An exception has occurred while saving a record. If error persists, please contact your system administrator.');
-                    }
-                }
-            }
-        }else{
+        Trigger_Configuration__mdt settings = SObjectDispatcher.getConfiguration('Default');
+        // if(settings.EBEDU__View_Detailed_Exceptions__c == false){
+        //     if(ex.getTypeName() == 'System.DmlException'){
+        //         DmlException dmlEx = (DmlException) ex;
+        //         for(Integer i = 0; i < ex.getNumDml(); i ++){
+        //             Integer index = ex.getDmlIndex(i);
+        //             String errorString = '';
+        //             errorString += ex.getDmlType(i) + ':';
+        //             errorString += ex.getDmlMessage(i);
+        //             if(ex.getDmlFieldNames(i).isEmpty() == false){
+        //                 errorString += ' [' + typeName + '.' + String.join(ex.getDmlFieldNames(i),',') + ']';
+        //             }
+        //             errorString += ' on row ' + index + '.';
+        //             errorString += ' This error may be from an internal automation. If error persists, please contact your system administrator.';
+        //             if(Test.isRunningTest() == false){
+        //                 objects[index].addError(errorString);
+        //             }
+        //         }
+        //     }else{
+        //         for(SObject obj:objects){
+        //             if(Test.isRunningTest() == false){
+        //                 obj.addError('An exception has occurred while saving a record. If error persists, please contact your system administrator.');
+        //             }
+        //         }
+        //     }
+        // }else{
             throw ex;
-        }
+        // }
     }
 }

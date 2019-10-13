@@ -12,7 +12,7 @@ global class TriggerPanel {
      * Private variable that maintains the panel settings during the execution context.
      */
     @testVisible
-    private static Map<String, Trigger_Panel__c> panelMap;
+    private static Map<String, Trigger_Panel__mdt> panelMap;
     
     /*
      * Private variable that maintains the previous status of switches and breakers 
@@ -47,12 +47,12 @@ global class TriggerPanel {
      * Global accessor for single TriggerPanel records. If no record is found, a default
      * is created with breaker and switches set to true.
      */
-    global static Trigger_Panel__c getPanel(String typeName){
-        Map<String, Trigger_Panel__c> panels = getAllPanels();
+    global static Trigger_Panel__mdt getPanel(String typeName){
+        Map<String, Trigger_Panel__mdt> panels = getAllPanels();
         if(panels.containsKey(typeName) == false){
-            Trigger_Panel__c panel = Trigger_Panel__c.getValues(typeName);
+            Trigger_Panel__mdt panel = Trigger_Panel__mdt.getValues(typeName);
             if(panel == null){
-                panel = (Trigger_Panel__c) Trigger_Panel__c.sObjectType.newSObject(null, true);
+                panel = (Trigger_Panel__mdt) Trigger_Panel__mdt.sObjectType.newSObject(null, true);
             	panel.Name = typeName;
             	panels.put(typeName, panel);    
             }
@@ -63,9 +63,12 @@ global class TriggerPanel {
     /**
      * Global accessor for TriggerPanel records.
      */
-    global static Map<String, Trigger_Panel__c> getAllPanels(){
+    global static Map<String, Trigger_Panel__mdt> getAllPanels(){
         if(panelMap == null){
-            panelMap = new Map<String, Trigger_Panel__c>(Trigger_Panel__c.getAll());
+            panelMap = new Map<String, Trigger_Panel__mdt>(
+                [   SELECT  Id, BeforeInsert__c, AfterInsert__c, BeforeUpdate__c, AfterUpdate__c,
+                            BeforeDelete__c, AfterDelete__c, After_Undelete__c, Breaker__c
+                    FROM    Trigger_Peanel__mdt]);
         }
         return panelMap;
     }
@@ -163,7 +166,7 @@ global class TriggerPanel {
     global static Boolean getPriorStatus(String typeName, String context){
         Boolean priorValue = stateHistory.get(buildKey(typeName, context));
         if(priorValue == null){
-            Trigger_Panel__c panel = Trigger_Panel__c.getValues(typeName);
+            Trigger_Panel__mdt panel = Trigger_Panel__mdt.getValues(typeName);
             if(panel != null){
                 priorValue = (Boolean) panel.get(context + '__c');
             }else{

@@ -1,11 +1,10 @@
 global class TriggerPanel {
 
     /**
-     * Private variable that controls global trigger execution. May only be set or
-     * edited via code. The primary use case is test data loading.
+     * Private variable that controls global trigger execution.
      */
     @testVisible
-    private static Boolean mainSwitch = true;
+    private static Boolean mainSwitch;
     
     
     /**
@@ -25,6 +24,9 @@ global class TriggerPanel {
      * Global accessor for the main switch. This controls the execution of all triggers collectively. 
      */
     global static Boolean getMainBreaker(){
+        if(mainSwitch == null){
+            mainSwitch = Trigger_Settings__c.getInstance().Bypass_Triggers__c == false;
+        }
         return mainSwitch;
     }
     
@@ -50,12 +52,9 @@ global class TriggerPanel {
     global static Trigger_Panel__mdt getPanel(String typeName){
         Map<String, Trigger_Panel__mdt> panels = getAllPanels();
         if(panels.containsKey(typeName) == false){
-            Trigger_Panel__mdt panel = Trigger_Panel__mdt.getValues(typeName);
-            if(panel == null){
-                panel = (Trigger_Panel__mdt) Trigger_Panel__mdt.sObjectType.newSObject(null, true);
-            	panel.Name = typeName;
-            	panels.put(typeName, panel);    
-            }
+            Trigger_Panel__mdt panel = (Trigger_Panel__mdt) Trigger_Panel__mdt.sObjectType.newSObject(null, true);
+            panel.DeveloperName = typeName;
+            panels.put(typeName, panel);
         }
         return panels.get(typeName);
     }
@@ -64,11 +63,20 @@ global class TriggerPanel {
      * Global accessor for TriggerPanel records.
      */
     global static Map<String, Trigger_Panel__mdt> getAllPanels(){
+        String configurationName = Trigger_Settings__c.getInstance().Trigger_Configuration__c;
+        if(configurationName == null){
+            configurationName = 'Default';
+        }
+
         if(panelMap == null){
-            panelMap = new Map<String, Trigger_Panel__mdt>(
-                [   SELECT  Id, BeforeInsert__c, AfterInsert__c, BeforeUpdate__c, AfterUpdate__c,
-                            BeforeDelete__c, AfterDelete__c, After_Undelete__c, Breaker__c
-                    FROM    Trigger_Peanel__mdt]);
+            panelMap = new Map<String, Trigger_Panel__mdt>();
+            for(Trigger_Panel__mdt panel:[  SELECT  Id, DeveloperName, Breaker__c, Before_Insert__c, After_Insert__c, 
+                                                    Before_Update__c, After_Update__c, Before_Delete__c, After_Delete__c, 
+                                                    After_Undelete__c 
+                                            FROM    Trigger_Panel__mdt
+                                            WHERE   Trigger_Configuration__r.DeveloperName = :configurationName]){
+                panelMap.put(panel.DeveloperName, panel);
+            }
         }
         return panelMap;
     }
@@ -95,7 +103,7 @@ global class TriggerPanel {
      * @param  context  The trigger context value with no spaces.  For example, 'beforeInsert'.
      * @param  active   The desired value to set.
      * 
-     * @return 			The prior value of the switch.
+     * @return          The prior value of the switch.
      */
     global static void setSwitch(String typeName, String context, Boolean active){
         Boolean priorValue = (Boolean) getPanel(typeName).put(context + '__c', active);
@@ -150,13 +158,13 @@ global class TriggerPanel {
      * @return          The return value indicates successful update (this transaction only).
      */
     global static void setAllSwitches(String typeName, Boolean active){
-        setSwitch(typeName, 'BeforeInsert', active);
-		setSwitch(typeName, 'AfterInsert', active);
-        setSwitch(typeName, 'BeforeUpdate', active);
-        setSwitch(typeName, 'AfterUpdate', active);
-        setSwitch(typeName, 'BeforeDelete', active);
-        setSwitch(typeName, 'AfterDelete', active);
-        setSwitch(typeName, 'AfterUndelete', active);
+        setSwitch(typeName, 'BEFORE_INSERT', active);
+        setSwitch(typeName, 'AFTER_INSERT', active);
+        setSwitch(typeName, 'BEFORE_UPDATE', active);
+        setSwitch(typeName, 'AFTER_UPDATE', active);
+        setSwitch(typeName, 'BEFORE_DELETE', active);
+        setSwitch(typeName, 'AFTER_DELETE', active);
+        setSwitch(typeName, 'AFTER_UNDELETE', active);
     }
     
     /**
@@ -166,11 +174,15 @@ global class TriggerPanel {
     global static Boolean getPriorStatus(String typeName, String context){
         Boolean priorValue = stateHistory.get(buildKey(typeName, context));
         if(priorValue == null){
-            Trigger_Panel__mdt panel = Trigger_Panel__mdt.getValues(typeName);
-            if(panel != null){
-                priorValue = (Boolean) panel.get(context + '__c');
+            //If null, then no change has occurred, get the raw value
+            if(context == null){
+                if(typeName == 'Main'){
+                    priorValue = getMainBreaker();
+                }else{
+                    priorValue = getBreaker(typeName);
+                }
             }else{
-                priorValue = true;
+                getSwitch(typeName, context);
             }
         }
         return priorValue;

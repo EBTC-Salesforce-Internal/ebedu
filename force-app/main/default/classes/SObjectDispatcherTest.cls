@@ -73,9 +73,7 @@ public class SObjectDispatcherTest {
      */
     @isTest
     public static void testException(){
-        TriggerPanel.getBreaker('Account');
-        Map<Id, Trigger_Panel__c> panelMap = new Map<Id, Trigger_Panel__c>();
-        panelMap.putAll(TriggerPanel.getAllPanels().values());
+        Map<Id, Trigger_Settings__c> panelMap = new Map<Id, Trigger_Settings__c>();
 
         Exception ex;
 
@@ -106,14 +104,13 @@ public class SObjectDispatcherTest {
         SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
         
         Test.startTest();
-        dispatch.execute('beforeInsert');
-        dispatch.execute('afterInsert');
-        dispatch.execute('beforeUpdate');
-        dispatch.execute('afterUpdate');
-        dispatch.execute('beforeDelete');
-        dispatch.execute('afterDelete');
-        dispatch.execute('afterUndelete');
-        dispatch.execute('beforeUndelete'); //Invalid context
+        dispatch.execute(TriggerOperation.BEFORE_INSERT);
+        dispatch.execute(TriggerOperation.AFTER_INSERT);
+        dispatch.execute(TriggerOperation.BEFORE_UPDATE);
+        dispatch.execute(TriggerOperation.AFTER_UPDATE);
+        dispatch.execute(TriggerOperation.BEFORE_DELETE);
+        dispatch.execute(TriggerOperation.AFTER_DELETE);
+        dispatch.execute(TriggerOperation.AFTER_UNDELETE);
         Test.stopTest();
     }
 
@@ -136,7 +133,7 @@ public class SObjectDispatcherTest {
         TriggerPanel.setBreaker('Account', false);
 
         Test.startTest();
-        dispatch.execute('beforeInsert');
+        dispatch.execute(TriggerOperation.BEFORE_INSERT);
         Test.stopTest();
     }
 
@@ -157,10 +154,10 @@ public class SObjectDispatcherTest {
         Map<Id, Account> accountMap = new Map<Id, Account>();
         accountMap.putAll(accounts);
         SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
-        TriggerPanel.setSwitch('Account', 'beforeInsert', false);
+        TriggerPanel.setSwitch('Account', 'BEFORE_INSERT', false);
 
         Test.startTest();
-        dispatch.execute('beforeInsert');
+        dispatch.execute(TriggerOperation.BEFORE_INSERT);
         Test.stopTest();
     }
 }

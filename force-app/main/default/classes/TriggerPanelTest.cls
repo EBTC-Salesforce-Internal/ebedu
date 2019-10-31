@@ -1,6 +1,14 @@
 @isTest
 public class TriggerPanelTest {
 
+    @TestSetup
+    static void prepData(){
+        Trigger_Settings__c settings = new Trigger_Settings__c();
+        settings.Trigger_Configuration__c = 'TestConfiguration';
+        settings.SetupOwnerId = UserInfo.getUserId();
+        insert settings;
+    }
+
     /**
      * Testing the 'GetAllPanels' function when no records are currently in database
      *
@@ -11,7 +19,7 @@ public class TriggerPanelTest {
         System.assertEquals(null, TriggerPanel.panelMap);
         System.assertNotEquals(null, TriggerPanel.getAllPanels());
         System.assertNotEquals(null, TriggerPanel.panelMap);
-        System.assertEquals(0, TriggerPanel.panelMap.size());
+        System.assertEquals(1, TriggerPanel.panelMap.size());
     }
 
     /**
@@ -22,11 +30,6 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testGetAllWithRecords(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        panel.Breaker__c = false;
-        insert panel;
-
         Test.startTest();
         System.assertEquals(null, TriggerPanel.panelMap);
         System.assertNotEquals(null, TriggerPanel.getAllPanels());
@@ -46,21 +49,21 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testGetRecordNoRecords(){
-        System.assertEquals(0, TriggerPanel.getAllPanels().size());
+        System.assertEquals(1, TriggerPanel.getAllPanels().size());
 
         Test.startTest();
-        Trigger_Panel__c panel = TriggerPanel.getPanel('Account');
+        Trigger_Panel__mdt panel = TriggerPanel.getPanel('Account');
         Test.stopTest();
 
-        System.assertEquals(1, TriggerPanel.getAllPanels().size());
+        System.assertEquals(2, TriggerPanel.getAllPanels().size());
         System.assertEquals(true, panel.Breaker__c);
-        System.assertEquals(true, panel.BeforeInsert__c);
-        System.assertEquals(true, panel.AfterInsert__c);
-        System.assertEquals(true, panel.BeforeUpdate__c);
-        System.assertEquals(true, panel.AfterUpdate__c);
-        System.assertEquals(true, panel.BeforeDelete__c);
-        System.assertEquals(true, panel.AfterDelete__c);
-        System.assertEquals(true, panel.AfterUndelete__c);
+        System.assertEquals(true, panel.Before_Insert__c);
+        System.assertEquals(true, panel.After_Insert__c);
+        System.assertEquals(true, panel.Before_Update__c);
+        System.assertEquals(true, panel.After_Update__c);
+        System.assertEquals(true, panel.Before_Delete__c);
+        System.assertEquals(true, panel.After_Delete__c);
+        System.assertEquals(true, panel.After_Undelete__c);
     }
 
     /**
@@ -71,19 +74,14 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testGetRecordWithRecords(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        panel.Breaker__c = false;
-        insert panel;
-
         System.assertEquals(1, TriggerPanel.getAllPanels().size());
 
         Test.startTest();
-        panel = TriggerPanel.getPanel('Account');
+        Trigger_Panel__mdt panel = TriggerPanel.getPanel('Account');
         Test.stopTest();
 
-        System.assertEquals(1, TriggerPanel.getAllPanels().size());
-        System.assertEquals(false, panel.Breaker__c);
+        System.assertEquals(2, TriggerPanel.getAllPanels().size());
+        System.assertEquals(true, panel.Breaker__c);
         
     }
 
@@ -104,14 +102,9 @@ public class TriggerPanelTest {
      * Expected behavior: When requested, the value will be returned.
      */
     @isTest
-    public static void testGetBreakerValid(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        panel.Breaker__c = false;
-        insert panel;
-        
+    public static void testGetBreakerValid(){        
         Test.startTest();
-        System.assertEquals(false, TriggerPanel.getBreaker('Account'));
+        System.assertEquals(false, TriggerPanel.getBreaker('EBEDUTriggerSettingsc'));
         Test.stopTest();
     }
     
@@ -139,10 +132,7 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testSetBreakerValid(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        panel.Breaker__c = false;
-        insert panel;
+
         
         Test.startTest();
         TriggerPanel.setBreaker('Account', false);
@@ -160,7 +150,7 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testGetSwitchNull(){
-        System.assert(TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assert(TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
     }
     
     /**
@@ -170,13 +160,8 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testGetSwitchValid(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        panel.afterInsert__c = false;
-        insert panel;
-        
         Test.startTest();
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assertEquals(false, TriggerPanel.getSwitch('EBEDUTriggerSettingsc', 'AFTER_INSERT'));
         Test.stopTest();
     }
     
@@ -190,10 +175,10 @@ public class TriggerPanelTest {
     @isTest
     public static void testSetSwitchNull(){
         Test.startTest();
-        TriggerPanel.setSwitch('Account', 'afterInsert', false);
+        TriggerPanel.setSwitch('Account', 'AFTER_INSERT', false);
         Test.stopTest();
         
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
     }
     
     /**
@@ -204,17 +189,15 @@ public class TriggerPanelTest {
      */
     @isTest
     public static void testSetSwitchValid(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        insert panel;
+
         
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
         
         Test.startTest();
-        TriggerPanel.setSwitch('Account', 'afterInsert', false);
+        TriggerPanel.setSwitch('Account', 'AFTER_INSERT', false);
         Test.stopTest();
         
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterInsert'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
     }
     
     /**
@@ -230,13 +213,13 @@ public class TriggerPanelTest {
         TriggerPanel.setAllSwitches('Account', false);
         Test.stopTest();
         
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeInsert'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterInsert'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeUpdate'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterUpdate'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeDelete'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterDelete'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterUndelete'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UPDATE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_DELETE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
     
     /**
@@ -246,30 +229,26 @@ public class TriggerPanelTest {
      * the value is saved to all contexts for this transaction only.
      */
     @isTest
-    public static void testSetAllSwitchesValid(){
-        Trigger_Panel__c panel = new Trigger_Panel__c();
-        panel.Name = 'Account';
-        insert panel;
-        
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeInsert'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterInsert'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeUpdate'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUpdate'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeDelete'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterDelete'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUndelete'));
+    public static void testSetAllSwitchesValid(){        
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UPDATE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_DELETE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
         
         Test.startTest();
         TriggerPanel.setAllSwitches('Account', false);
         Test.stopTest();
         
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeInsert'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterInsert'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeUpdate'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterUpdate'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'beforeDelete'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterDelete'));
-        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'afterUndelete'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UPDATE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_DELETE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
+        System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
     
     /**
@@ -285,13 +264,13 @@ public class TriggerPanelTest {
         TriggerPanel.reset('Account');
         Test.stopTest();
         
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeInsert'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterInsert'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeUpdate'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUpdate'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'beforeDelete'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterDelete'));
-        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'afterUndelete'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UPDATE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_DELETE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
     
     /**

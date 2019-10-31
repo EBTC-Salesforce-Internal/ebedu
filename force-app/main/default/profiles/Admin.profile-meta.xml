@@ -22,11 +22,66 @@
         <field>Trigger_Configuration__mdt.Namespace_Prefix__c</field>
         <readable>false</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.AfterDelete__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.AfterInsert__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.AfterUndelete__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.AfterUpdate__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.BeforeDelete__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.BeforeInsert__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.BeforeUpdate__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.Breaker_Std__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.Breaker_Validation__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.Breaker__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Trigger_Panel__mdt.Trigger_Configuration__c</field>
+        <readable>false</readable>
+    </fieldPermissions>
     <layoutAssignments>
         <layout>Trigger_Configuration__mdt-EBEDU Trigger Configuration Layout</layout>
     </layoutAssignments>
     <layoutAssignments>
-        <layout>Trigger_Panels__mdt-Trigger Panel Layout</layout>
+        <layout>Trigger_Panel__mdt-Trigger Panel Layout</layout>
     </layoutAssignments>
     <userLicense>Salesforce</userLicense>
     <userPermissions>

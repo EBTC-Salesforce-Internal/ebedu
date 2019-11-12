@@ -1,11 +1,17 @@
 {
-  "packageDirectories": [
-    {
-      "path": "force-app",
-      "default": true
+    "packageDirectories": [
+        {
+            "path": "force-app",
+            "default": true,
+            "package": "EBEDU Trigger Framework",
+            "versionName": "Winter 20",
+            "versionNumber": "1.9.0.NEXT"
+        }
+    ],
+    "namespace": "EBEDU",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "46.0",
+    "packageAliases": {
+        "EBEDU Trigger Framework": "0Ho1P000000XZAWSA4"
     }
-  ],
-  "namespace": "EBEDU",
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "46.0"
 }

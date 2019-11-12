@@ -82,36 +82,113 @@ public class TriggerPanelTest {
 
         System.assertEquals(2, TriggerPanel.getAllPanels().size());
         System.assertEquals(true, panel.Breaker__c);
-        
+
+    }
+
+    /**
+     * Testing the 'GetMainBreaker' function
+     *
+     * Expected behavior: When requested, the default value should be true.
+     */
+    @isTest
+    public static void testGetMainBreaker_Null(){
+        System.assertEquals(true, TriggerPanel.getMainBreaker());
+    }
+
+    /**
+     * Testing the 'GetMainBreaker' function with configured value
+     *
+     * Expected behavior: When requested, the default value should be false
+     * based on the overridden configuration.
+     */
+    @isTest
+    public static void testGetMainBreaker_Valid(){
+        Trigger_Settings__c settings = Trigger_Settings__c.getInstance(UserInfo.getUserId());
+        settings.Bypass_Triggers__c = true;
+        update settings;
+
+        Test.startTest();
+        System.assertEquals(false, TriggerPanel.getMainBreaker());
+        Test.stopTest();
+    }
+
+    /**
+     * Testing the 'SetMainBreaker' and 'RevertMainBreaker' functions
+     *
+     * Expected behavior: When requested, first revert just returns the original
+     * value. The set appropriately changes the value. Revert then moves it back
+     * to the prior state.
+     */
+    @isTest
+    public static void testSetRevertMainBreaker_Activated(){
+        System.assertEquals(true, TriggerPanel.getMainBreaker());
+
+        Test.startTest();
+        TriggerPanel.revertMainBreaker();
+        System.assertEquals(true, TriggerPanel.getMainBreaker());
+
+        TriggerPanel.setMainBreaker(false);
+        System.assertEquals(false, TriggerPanel.getMainBreaker());
+
+        TriggerPanel.revertMainBreaker();
+        System.assertEquals(true, TriggerPanel.getMainBreaker());
+
+        Test.stopTest();
+    }
+
+    /**
+     * Testing the 'SetMainBreaker' and 'RevertMainBreaker' function
+     *
+     * Expected behavior: When requested, first revert just returns the original
+     * value. The set appropriately changes the value. Revert then moves it back
+     * to the prior state.
+     */
+    @isTest
+    public static void testSetRevertMainBreaker_Deactivated(){
+        Trigger_Settings__c settings = Trigger_Settings__c.getInstance(UserInfo.getUserId());
+        settings.Bypass_Triggers__c = true;
+        update settings;
+
+        Test.startTest();
+        TriggerPanel.revertMainBreaker();
+        System.assertEquals(false, TriggerPanel.getMainBreaker());
+
+        TriggerPanel.setMainBreaker(true);
+        System.assertEquals(true, TriggerPanel.getMainBreaker());
+
+        TriggerPanel.revertMainBreaker();
+        System.assertEquals(false, TriggerPanel.getMainBreaker());
+
+        Test.stopTest();
     }
 
     /**
      * Testing the 'GetBreaker' function with no record in the database
      *
-     * Expected behavior: When requested, the default record will be 
+     * Expected behavior: When requested, the default record will be
      * generated and return the default value of 'true'.
      */
     @isTest
     public static void testGetBreakerNull(){
         System.assert(TriggerPanel.getBreaker('Account'));
     }
-    
+
     /**
      * Testing the 'GetBreaker' function with a record in the database
      *
      * Expected behavior: When requested, the value will be returned.
      */
     @isTest
-    public static void testGetBreakerValid(){        
+    public static void testGetBreakerValid(){
         Test.startTest();
         System.assertEquals(false, TriggerPanel.getBreaker('EBEDUTriggerSettingsc'));
         Test.stopTest();
     }
-    
+
     /**
      * Testing the 'SetBreaker' function with no record in the database
      *
-     * Expected behavior: When requested, the default record will be 
+     * Expected behavior: When requested, the default record will be
      * generated and the value is saved to the record for access in this
      * transaction.
      */
@@ -120,39 +197,43 @@ public class TriggerPanelTest {
         Test.startTest();
         TriggerPanel.setBreaker('Account', false);
         Test.stopTest();
-        
+
         System.assertEquals(false, TriggerPanel.getBreaker('Account'));
     }
-    
+
     /**
-     * Testing the 'SetBreaker' function with a record in the database
+     * Testing the 'SetBreaker' and 'RevertBreaker' function with a record in the database
      *
      * Expected behavior: When requested, the record will be returned and
      * the value is updated for this transaction only.
      */
     @isTest
-    public static void testSetBreakerValid(){
+    public static void testSetRevertBreakerValid(){
 
-        
+
         Test.startTest();
         TriggerPanel.setBreaker('Account', false);
-        Test.stopTest();
-        
         System.assertEquals(false, TriggerPanel.getBreaker('Account'));
-        
+
+        TriggerPanel.revertBreaker('Account');
+        System.assertEquals(true, TriggerPanel.getBreaker('Account'));
+
+        Test.stopTest();
+
+
     }
-    
+
     /**
      * Testing the 'GetSwitch' function with no record in the database
      *
-     * Expected behavior: When requested, the default record will be 
+     * Expected behavior: When requested, the default record will be
      * generated and return the default value of 'true'.
      */
     @isTest
     public static void testGetSwitchNull(){
         System.assert(TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
     }
-    
+
     /**
      * Testing the 'GetSwitch' function with a record in the database
      *
@@ -164,11 +245,11 @@ public class TriggerPanelTest {
         System.assertEquals(false, TriggerPanel.getSwitch('EBEDUTriggerSettingsc', 'AFTER_INSERT'));
         Test.stopTest();
     }
-    
+
     /**
      * Testing the 'SetSwitch' function with no record in the database
      *
-     * Expected behavior: When requested, the default record will be 
+     * Expected behavior: When requested, the default record will be
      * generated and the value is saved to the record for access in this
      * transaction.
      */
@@ -177,10 +258,10 @@ public class TriggerPanelTest {
         Test.startTest();
         TriggerPanel.setSwitch('Account', 'AFTER_INSERT', false);
         Test.stopTest();
-        
+
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
     }
-    
+
     /**
      * Testing the 'SetSwitch' function with a record in the database
      *
@@ -190,21 +271,25 @@ public class TriggerPanelTest {
     @isTest
     public static void testSetSwitchValid(){
 
-        
+
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
-        
+
         Test.startTest();
         TriggerPanel.setSwitch('Account', 'AFTER_INSERT', false);
-        Test.stopTest();
-        
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+
+        TriggerPanel.revertSwitch('Account', 'AFTER_INSERT');
+        System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
+
+        Test.stopTest();
+
     }
-    
+
     /**
      * Testing the 'SetAllSwitch' function with no record in the database
      *
-     * Expected behavior: When requested, the default record will be 
-     * generated and the value is saved to the record for all contexts for access in 
+     * Expected behavior: When requested, the default record will be
+     * generated and the value is saved to the record for all contexts for access in
      * this transaction.
      */
     @isTest
@@ -212,7 +297,7 @@ public class TriggerPanelTest {
         Test.startTest();
         TriggerPanel.setAllSwitches('Account', false);
         Test.stopTest();
-        
+
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
@@ -221,7 +306,7 @@ public class TriggerPanelTest {
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
-    
+
     /**
      * Testing the 'SetAllSwitch' function with a record in the database
      *
@@ -229,7 +314,7 @@ public class TriggerPanelTest {
      * the value is saved to all contexts for this transaction only.
      */
     @isTest
-    public static void testSetAllSwitchesValid(){        
+    public static void testSetAllSwitchesValid(){
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
@@ -237,11 +322,11 @@ public class TriggerPanelTest {
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_DELETE'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
-        
+
         Test.startTest();
         TriggerPanel.setAllSwitches('Account', false);
         Test.stopTest();
-        
+
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
@@ -250,7 +335,7 @@ public class TriggerPanelTest {
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
         System.assertEquals(false, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
-    
+
     /**
      * Testing the 'Reset' function with a single value in cache
      *
@@ -259,11 +344,11 @@ public class TriggerPanelTest {
     @isTest
     public static void testReset(){
         TriggerPanel.setAllSwitches('Account', false);
-        
+
         Test.startTest();
         TriggerPanel.reset('Account');
         Test.stopTest();
-        
+
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_INSERT'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_INSERT'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'BEFORE_UPDATE'));
@@ -272,7 +357,7 @@ public class TriggerPanelTest {
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_DELETE'));
         System.assertEquals(true, TriggerPanel.getSwitch('Account', 'AFTER_UNDELETE'));
     }
-    
+
     /**
      * Testing the 'Reset' function with a no values in cache
      *
@@ -283,11 +368,11 @@ public class TriggerPanelTest {
         Test.startTest();
         TriggerPanel.reset('Account');
         Test.stopTest();
-        
+
         //Successful if no error thrown
         System.assert(true);
     }
-    
+
     /**
      * Testing the 'ResetAll' function with a value in cache
      *
@@ -296,11 +381,11 @@ public class TriggerPanelTest {
     @isTest
     public static void testResetAll(){
         TriggerPanel.setBreaker('Account', false);
-        
+
         Test.startTest();
         TriggerPanel.resetAll();
         Test.stopTest();
-        
+
         System.assertEquals(null, TriggerPanel.panelMap);
     }
 }

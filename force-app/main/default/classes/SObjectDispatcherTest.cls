@@ -2,64 +2,34 @@
 public class SObjectDispatcherTest {
 
     /**
-     * Testing the 'Init' method with a newList value
+     * Testing the 'Init' method with a generic value
      *
-     * Expected behavior: The init will run and the dispatcher will
-     * have a typeName of 'Account'.  Note that for testing we do not have
-     * any actual object dispatchers, so the generic is used.
+     * Expected behavior: The init will run and the handler will
+     * have a typeName of 'SObject'.  Note that for testing we do not have
+     * any actual object handlers, so the generic is used.
      */
     @isTest
-    public static void testNewListInit(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-
+    public static void testInit_Valid(){
         Test.startTest();
-        SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
+        SObjectHandler handler = SObjectDispatcher.init('SObject');
         Test.stopTest();
 
-        System.assertEquals('Account', dispatch.typeName);
+        System.assertEquals('SObject', handler.typeName);
     }
 
     /**
-     * Testing the 'Init' method with a oldMap value
+     * Testing the 'Init' method with a invalid value
      *
-     * Expected behavior: The init will run and the dispatcher will
-     * have a typeName of 'Account'.  Note that for testing we do not have
-     * any actual object dispatchers, so the generic is used.
+     * Expected behavior: The init will run and the handler returned
+     * will be null.
      */
     @isTest
-    public static void testOldMapInit(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-        Map<Id, Account> accountMap = new Map<Id, Account>();
-        accountMap.putAll(accounts);
-
+    public static void testInit_Invalid(){
         Test.startTest();
-        SObjectDispatcher dispatch = SObjectDispatcher.init(null, accountMap);
+        SObjectHandler handler = SObjectDispatcher.init('InvalidTypeName');
         Test.stopTest();
 
-        System.assertEquals('Account', dispatch.typeName);
-    }
-
-    /**
-     * Testing the 'Init' method with a null values
-     *
-     * Expected behavior: In practice, this would return a null value for the
-     * dispatcher.  However for testing we are forcing the SObject dispatcher,
-     * hence we anticipate an '' typeName that would cause a null during runtime.
-     */
-    @isTest
-    public static void testNullInit(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-        Map<Id, Account> accountMap = new Map<Id, Account>();
-        accountMap.putAll(accounts);
-
-        Test.startTest();
-        SObjectDispatcher dispatch = SObjectDispatcher.init(null, null);
-        Test.stopTest();
-
-        System.assertEquals('', dispatch.typeName);
+        System.assertEquals(null, handler);
     }
 
     /**
@@ -72,13 +42,11 @@ public class SObjectDispatcherTest {
      */
     @isTest
     public static void testInitException(){
-        Map<Id, Trigger_Settings__c> panelMap = new Map<Id, Trigger_Settings__c>();
-
         Exception ex;
 
         Test.startTest();
         try{
-            SObjectDispatcher dispatch = SObjectDispatcher.init(panelMap.values(), null);
+            SObjectHandler handler = SObjectDispatcher.init('Exception');
         }catch(Exception e){
             ex = e;
         }
@@ -109,7 +77,7 @@ public class SObjectDispatcherTest {
 
         Test.startTest();
         try{
-            SObjectDispatcher dispatch = SObjectDispatcher.init(panelMap.values(), null);
+            SObjectHandler handler = SObjectDispatcher.init('Exception');
         }catch(Exception e){
             ex = e;
         }
@@ -224,76 +192,4 @@ public class SObjectDispatcherTest {
         System.assert(ApexPages.getMessages()[1].getSummary().contains(System.Label.EBEDU_Generic_DML_Error_Message));
     }
 
-    /**
-     * Test all contexts of the execute method (including invalid)
-     *
-     * Expected behavior: Each of the context methods run.  The invalid context will
-     * not run as there is no switch for it in the TriggerPanel.
-     *
-     * Note: There is no good way I have found to make sure the methods actually run
-     * except to see the code coverage.
-     */
-    @isTest
-    public static void testExecuteAllContexts(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-        SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
-
-        Test.startTest();
-        dispatch.execute(TriggerOperation.BEFORE_INSERT);
-        dispatch.execute(TriggerOperation.AFTER_INSERT);
-        dispatch.execute(TriggerOperation.BEFORE_UPDATE);
-        dispatch.execute(TriggerOperation.AFTER_UPDATE);
-        dispatch.execute(TriggerOperation.BEFORE_DELETE);
-        dispatch.execute(TriggerOperation.AFTER_DELETE);
-        dispatch.execute(TriggerOperation.AFTER_UNDELETE);
-        Test.stopTest();
-    }
-
-    /**
-     * Test the execute method when a TriggerPanel breaker is false
-     *
-     * Expected Behavior: The prep, context, and finally methods are not run as the breaker short
-     * circuits execution.
-     *
-     * Note: There is no good way I have found to make sure the methods actually run
-     * except to see the code coverage.
-     */
-    @isTest
-    public static void testExecuteBreakerFalse(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-        Map<Id, Account> accountMap = new Map<Id, Account>();
-        accountMap.putAll(accounts);
-        SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
-        TriggerPanel.setBreaker('Account', false);
-
-        Test.startTest();
-        dispatch.execute(TriggerOperation.BEFORE_INSERT);
-        Test.stopTest();
-    }
-
-
-    /**
-     * Test the execute method when a TriggerPanel switch is false
-     *
-     * Expected Behavior: The prep and finally methods are run but the context method
-     * is not run as the switch short circuits execution.
-     *
-     * Note: There is no good way I have found to make sure the methods actually run
-     * except to see the code coverage.
-     */
-    @isTest
-    public static void testExecuteSwitchFalse(){
-        List<Account> accounts = new List<Account>();
-        accounts.add(new Account());
-        Map<Id, Account> accountMap = new Map<Id, Account>();
-        accountMap.putAll(accounts);
-        SObjectDispatcher dispatch = SObjectDispatcher.init(accounts, null);
-        TriggerPanel.setSwitch('Account', 'BEFORE_INSERT', false);
-
-        Test.startTest();
-        dispatch.execute(TriggerOperation.BEFORE_INSERT);
-        Test.stopTest();
-    }
 }

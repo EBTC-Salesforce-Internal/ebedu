@@ -3,15 +3,15 @@
         {
             "path": "force-app",
             "default": true,
-            "package": "EBEDU Trigger Framework",
+            "package": "EDHU Trigger Framework",
             "versionName": "Winter 20",
             "versionNumber": "2.0.0.NEXT"
         }
     ],
-    "namespace": "EBEDU",
+    "namespace": "edhu",
     "sfdcLoginUrl": "https://login.salesforce.com",
-    "sourceApiVersion": "46.0",
+    "sourceApiVersion": "47.0",
     "packageAliases": {
-        "EBEDU Trigger Framework": "0Ho1P000000XZAWSA4"
+        "EDHU Trigger Framework": "0Ho1P000000Gmb2SAC"
     }
 }

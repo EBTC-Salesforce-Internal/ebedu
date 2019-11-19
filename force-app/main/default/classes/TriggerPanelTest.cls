@@ -181,7 +181,7 @@ public class TriggerPanelTest {
     @isTest
     public static void testGetBreakerValid(){
         Test.startTest();
-        System.assertEquals(false, TriggerPanel.getBreaker('EBEDUTriggerSettingsc'));
+        System.assertEquals(false, TriggerPanel.getBreaker('TestPanel'));
         Test.stopTest();
     }
 
@@ -242,7 +242,7 @@ public class TriggerPanelTest {
     @isTest
     public static void testGetSwitchValid(){
         Test.startTest();
-        System.assertEquals(false, TriggerPanel.getSwitch('EBEDUTriggerSettingsc', 'AFTER_INSERT'));
+        System.assertEquals(false, TriggerPanel.getSwitch('TestPanel', 'AFTER_INSERT'));
         Test.stopTest();
     }
 

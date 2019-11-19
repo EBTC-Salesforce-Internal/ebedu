@@ -19,6 +19,6 @@
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>EBEDU Init Error Message</shortDescription>
-        <value>An exception occurred during dispatcher initialization. Please contact your system administrator.</value>
+        <value>An exception occurred during handler initialization. Please contact your system administrator.</value>
     </labels>
 </CustomLabels>

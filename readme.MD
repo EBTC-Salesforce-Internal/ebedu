@@ -5,10 +5,10 @@ The EDHU Trigger Framework is an object-oriented trigger framework for simplifyi
 
 Simply put, the layers translate as follows:
 
-* **Event** :The capture of the event.
-* **Dispatcher**:The identification and handoff to the proper handler.
-* **Handler**:The handling of the event and coordination of multiple actions required to properly handle the event.
-* **Utility**:The re-usable actions that are required to properly handle the event.
+* **Event**: The capture of the event.
+* **Dispatcher**: The identification and handoff to the proper handler.
+* **Handler**: The handling of the event and coordination of multiple actions required to properly handle the event.
+* **Utility**: The re-usable actions that are required to properly handle the event.
 
 Robert Nunemaker described it with the 'Parable of the Plumber' (notes added):
 
@@ -20,11 +20,11 @@ When looked at this way, it becomes easier to view the logic and identify what e
 
 ### Managed Package ###
 
-A managed package version is available at the following url [https://login.salesforce.com/packaging/installPackage.apexp?p0=04t36000000H66s]. To install via Salesforce DX, run the following command
+A managed package version is available at the following url [https://login.salesforce.com/packaging/installPackage.apexp?p0=04t1P0000006JqPQAU]. To install via Salesforce DX, run the following command
 
 ```
 #!Command Line
-sfdx force:package:install -i 04t36000000H66s -u <alias or username>
+sfdx force:package:install -i 04t1P0000006JqPQAU -u <alias or username>
 ```
 
 This installs the SObjectDispatcher, the generic SObjectHandler, and the TriggerPanel with their supporting settings. These are in the EDHU namespace.
@@ -99,7 +99,49 @@ global class {{ handler_name }} extends EDHU.SObjectHandler {
     /**
      * The before insert functionality on the {{ object_name }} object
      */
-    global override void beforeInsert(){
+    global override void beforeInsert(List<SObject> newList){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The after insert functionality on the {{ object_name }} object
+     */
+    global override void afterInsert(List<SObject> newList){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The before update functionality on the {{ object_name }} object
+     */
+    global override void beforeUpdate(List<SObject> newList, Map<Id, SObject> oldMap){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The after update functionality on the {{ object_name }} object
+     */
+    global override void afterUpdate(List<SObject> newList, Map<Id, SObject> oldMap){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The before delete functionality on the {{ object_name }} object
+     */
+    global override void beforeDelete(Map<Id, SObject> oldMap){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The after delete functionality on the {{ object_name }} object
+     */
+    global override void afterDelete(Map<Id, SObject> oldMap){
+        System.debug('Overriden');
+    }
+
+    /**
+     * The after undelete functionality on the {{ object_name }} object
+     */
+    global override void afterUndelete(List<SObject> newList){
         System.debug('Overriden');
     }
 
@@ -120,37 +162,70 @@ An administrator is able to configure the initial state of the breakers and swit
 
 ### Main Breaker, Object Breakers, and Switches ###
 
-Turning off the main breaker programatically will disables all triggers for the duration of the execution context. If set via configuration, it is set for all execution contexts for the configured users.
+The concept of breakers and switchings is borrowed from the electrical wiring of a home. On the exterior of the house is a 'Main' breaker, owned by the power company, that turns on and off power to the entire home.  That breaker is wired to the familiar breaker panel that control the different rooms in the house. Past each breaker are a seriese of switches that turn on and off specific lights, plugs, etc. Each of these settings are controlled in apex or via configuration.
+
+The main breaker is controlled in configuration on the Trigger_Settings__c custom setting record. It, along with the configuration breakers for standard automation and validation rules are set by org, profile, or user and apply to all contexts run by that user. The trigger breaker can also be set via apex for the duration of a single execution context. The standard automation and validation breakers can not be set via apex (and would have no affect if they were). They must also be manually checked in each of your automations and validations (they do not apply automatically).
 
 ```
 #!Apex
-//Turn off main breaker
-EDHU.TriggerPanel.setMainBreaker(false);
+//Get main breaker
+EDHU.TriggerPanel.getMainBreaker();
 
-```
-
-The main breaker can also be turned back on
-
-```
-#!Apex
-//Turn on main breaker
+//Set main breaker
 EDHU.TriggerPanel.setMainBreaker(true);
 
-```
-
-And reverted
-
-```
-#!Apex
 //Revert main breaker
 EDHU.TriggerPanel.revertMainBreaker();
 
 ```
 
+Object breakers are controlled by a users selected Trigger Configuration. Each trigger panel can be set either in configuration or code for all or specific contexts respectively. If no Trigger_Panel__mdt record exists, all values are assumed to be true (active).
+
+```
+#!Apex
+//Get object breaker
+EDHU.TriggerPanel.getBreaker('Account');
+
+//Set an object breaker
+EDHU.TriggerPanel.setBreaker('Account', true);
+
+//Revert an object breaker
+EDHU.TriggerPanel.revertBreaker('Account');
+
+```
+
+Trigger context switches follow the same rules as object breakers. The addition of the trigger context to the commands allows the specific context control.
+
+```
+#!Apex
+//Get switch
+EDHU.TriggerPanel.getSwitch('Account', 'BEFORE_INSERT');
+
+//Set switch
+EDHU.TriggerPanel.setSwitch('Account', 'BEFORE_INSERT', true);
+
+//Revert switch
+EDHU.TriggerPanel.revertSwitch('Account', 'BEFORE_INSERT');
+
+//Set all switches
+EDHU.TriggerPanel.setAllSwitches('Account', true);
+
+```
+
 ### Revert Functions ###
 
-Revert function return the status of a switch or breaker back to the *immediate* prior status. It does not keep a history stack in any way.
+Revert function return the status of a switch or breaker back to the *immediate* prior status. It does not keep a history stack in any way. If no prior status is logged, it will reset the value it is initially configured value.
 
 ### Reset Functions ###
 
 The reset function returns a value to its initial state. If an initial state is undefined, it defaults to true.
+
+```
+#!Apex
+//Reset a panel
+EDHU.TriggerPanel.reset('Account');
+
+//Reset all panels
+EDHU.TriggerPanel.resetAll();
+
+```

@@ -12,6 +12,7 @@
     "sfdcLoginUrl": "https://login.salesforce.com",
     "sourceApiVersion": "47.0",
     "packageAliases": {
-        "EDHU Trigger Framework": "0Ho1P000000Gmb2SAC"
+        "EDHU Trigger Framework": "0Ho1P000000Gmb2SAC",
+        "EDHU Trigger Framework@2.0.0-1": "04t1P0000006JqPQAU"
     }
 }

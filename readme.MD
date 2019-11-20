@@ -1,17 +1,18 @@
-# EDU Trigger Framework
+# EDHU Trigger Framework
 
 ## Overview ##
-The EDU Trigger Framework is an object-oriented trigger framework for simplifying and controlling trigger execution. EDU stands for Event-Dispatcher-Utility and is heavily influenced by Andy Fawcett (FinancialForce) and Robert Nunemaker (Citrix) during their 2014 Dreamforce presentations on Enterprise Apex Patterns and the Event-Dispatch-Action framework respectively.
+The EDHU Trigger Framework is an object-oriented trigger framework for simplifying and controlling trigger execution. EDHU stands for Event-Dispatch-Handler-Utility and is heavily influenced by Andy Fawcett (FinancialForce) and Robert Nunemaker (Citrix) during their 2014 Dreamforce presentations on Enterprise Apex Patterns and the Event-Dispatch-Action framework respectively. Thanks also goes to Ken Draper for additional feedback on standard enterprise patterns and their application within Salesforce.com.
 
 Simply put, the layers translate as follows:
 
-* **Event** :The capture of the event and hand-off to the dispatcher.
-* **Dispatcher**:The handling of the event and coordination of multiple actions required to properly handle the event.
+* **Event** :The capture of the event.
+* **Dispatcher**:The identification and handoff to the proper handler.
+* **Handler**:The handling of the event and coordination of multiple actions required to properly handle the event.
 * **Utility**:The re-usable actions that are required to properly handle the event.
 
 Robert Nunemaker described it with the 'Parable of the Plumber' (notes added):
 
-A pipe in your house bursts (event). You call the plumbing company (hand-off to dispatcher), who sends out a plumber (dispatcher). The plumber assess the situation (business logic in dispatcher) and uses a set of parts, tools, and processes (utilities) to resolve the issue.
+A pipe in your house bursts (event). You call the plumbing company (dispatcher), who sends out a plumber (hander). The plumber assess the situation (business logic in handler) and uses a set of parts, tools, and processes (utilities) to resolve the issue.
 
 When looked at this way, it becomes easier to view the logic and identify what elements belong in which locations. This layered logic can be applied in many situations, but specifically here to triggers.
 
@@ -26,11 +27,13 @@ A managed package version is available at the following url [https://login.sales
 sfdx force:package:install -i 04t36000000H66s -u <alias or username>
 ```
 
-This installs both the SObjectDispatcher and the TriggerPanel with their supporting settings. These are in the EBEDU namespace. 
+This installs the SObjectDispatcher, the generic SObjectHandler, and the TriggerPanel with their supporting settings. These are in the EDHU namespace.
 
-Once installed, configure the EBEDU.Settings__c org-wide default record. On this record, set your dispatcher prefix. This is a way to help organize your code in a more usable way. Internally, your default is 'EB_'. You may also want to configure a record for your user or profile to view detailed error messages. This passes through the actual error thrown directly to the user, rather than presenting a simplified message to the user (see Error Handling).
+Once installed, configure the EDHU.Trigger_Settings__c org-wide custom setting record. These records can be overriden by profile and user to allow for fine-grained control of the system. On this record, there are settings to bypass all framework triggers (also known as the Main breaker), standard automation, and validation rules. These settings only function as you build conforming triggers, process builders, workflow rules, and validation rules. You can also configure the option to mask detailed error messages. This replaces the actual error thrown by the code and presents a simplified message to the user (see Error Handling).
 
-Note: All documentation assumes the installation of the managed version. Of special note, is that any overrides to the SObjectDispatcher methods must be *global*. This grants the managed methods on the SObjectDispatcher to interact appropriately with your code.
+On the EBHU.Trigger_Settings__c record, you can configure different Trigger Configuration values. These map to the Trigger_Configuration__mdt object by developer name. Each trigger configuration has its own set of Trigger_Panel__mdt records, allowing you to configure trigger status as granular as by sObject by person.
+
+Note: All documentation assumes the installation of the managed version. Of special note, is that any overrides to the SObjectHandler methods must be *global*. This grants the managed methods on the SObjectDispatcher to interact appropriately with your instantiated handler.
 
 ### Unmanaged Code ###
 
@@ -40,161 +43,72 @@ Cloning this repository and uploading into your own org will give you full/unres
 
 ## Triggers ##
 
-In the EDU framework, triggers only handle enough logic in order to 'hand-off' to the correct dispatcher. The SObjectDispatcher.init method detects the data type of the newList or oldMap and instantiates the correct dispatcher class. Triggers themselves do not have any particular naming convention (I recommend just the object name for simplicity). Copy and paste the code below, replacing the SObject type name in the appropriate places.
+In the EDHU framework, triggers only handle enough logic in order to pass the context information to the appropriate handler. The SObjectDispatcher.init method identifies the handler based on the naming convention 'typeName + "Handler". It then instantiates the class. The typeName value is recommended to be the sObject developer name with all '_' characters removed. Triggers themselves do not have any particular naming convention (I recommend just the object name for simplicity). Copy and paste the code below, replacing the SObject type name in the appropriate places.
 
 ```
 #!Apex
 
-trigger {{ trigger_name }} on {{ object_name }} (before insert, before update,  before delete,
-                                                 after insert,  after update,   after delete,   after undelete) {
+trigger {{ type_name }} on {{ object_name }} (
+        before insert, before update,  before delete,
+        after insert,  after update,   after delete,   after undelete) {
 
-    //Initialize the dispatcher
-    EBEDU.SObjectDispatcher dispatch = EBEDU.SObjectDispatcher.init(Trigger.new, Trigger.oldMap);
+    //Initialize the handler
+    EDHU.SObjectHandler handler = EBEDU.SObjectDispatcher.init( {{ type_name }});
 
     //Execute the appropriate dispatch method.
-    if (dispatch != null) {
-        if (Trigger.isBefore) {
-            if (Trigger.isInsert) { dispatch.execute('beforeInsert'); }
-            if (Trigger.isUpdate) { dispatch.execute('beforeUpdate'); }
-            if (Trigger.isDelete) { dispatch.execute('beforeDelete'); }
-        }
-        if (Trigger.isAfter) {
-            if (Trigger.isInsert) { dispatch.execute('afterInsert'); }
-            if (Trigger.isUpdate) { dispatch.execute('afterUpdate'); }
-            if (Trigger.isDelete) { dispatch.execute('afterDelete'); }
-            if (Trigger.isUndelete) { dispatch.execute('afterUndelete'); }
-        }
-    } else {
-        System.debug('No dispatcher found.');
-    }
+    if(dispatch != null){ dispatch.execute(Trigger.operationType, Trigger.new, Trigger.oldMap); }
 }
 ```
 
-## Dispatchers ##
+## Handlers ##
 
-The dispatcher is where all logic is controlled. Included in the package is a single 'SObjectDispatcher' class which defines the base operations of the framework. Object-specific dispatchers extend this class, inheriting the standard logic, but allowing for any piece to be overridden and customized.
+The handler is where all logic is controlled. Included in the package is a single 'SObjectHandler' class which defines the basic operations of a framework. Object-specific handlers extend this class, inheriting the standard logic, but allowing for any piece to be overridden and customized. Handlers are held in memory as a singleton value. This means that you should NOT hold any member variables on the handler that are data dependent. Anything requiring that level of complexity is best abstracted into a separate object oriented utility class.
 
 ### Naming Convention ###
 
-When creating your dispatcher, please make sure to following the following naming convention:
+When creating your handler, please make sure to following the following naming convention:
 
-<DispatcherPrefix> + <SObjectAPINameWithoutUnderscores> + 'Dispatcher'.
+<TypeName> + 'Handler'.
 
-The commonly missed item here is that the name must meet this criteria extactly. As an example of the above, if my dispatcher prefix is 'EB_',
+The commonly missed item here is that the name must meet this criteria extactly. The type name is the value passed by the trigger during intialization. Technically, this would allow multiple objects to utilize the same handler, however this is not recommended.
 
-* Account --> EB_AccountDispatcher
-* Contact --> EB_ContactDispatcher
-* Project_Milestone__c --> EB_ProjectMilestonecDispatcher (don't forget the 'c'!)
+* Account --> AccountHandler
+* Contact --> ContactHandler
+* Project_Milestone__c --> ProjectMilestonecHandler (don't forget the 'c'!)
 
 ### SObjectDispatcher ###
 
-Only one global static method exists in the standard SObjectDispatcher class. This *init* method accepts the newList and oldMap variables from the trigger context, identify the proper dispatcher to utilize (based on the object type), and return the initialized dispatcher. This method should be referenced only by the trigger.
+The first global static method in the standard SObjectDispatcher class is the *init* method. This method accepts the typeName variable, identifies the proper handler to utilize (based on the convention), and return the initialized handler. This method should be referenced only by the trigger.
 
-The *execute* instance method controls the actual flow of logic within the trigger. It executes checks to the Trigger Panel to determine if specific functions should be run (see Trigger Panel). It also provides global error handling for logic within an object-specific dispatcher (see Error Handling). The execute method references other instance methods in the following order for each run:
+The second global static method provides a standard method of error handling that supports masking of exception messages for end users.
 
-1. **Preparation Methods**:The *prepBefore* and *prepAfter* methods are run based on the context and the status of the object's breaker. The purpose of these methods is to promote bulkification by providing a location to run any queries for dependent data, etc.
-2. **Context Methods**:The context methods (*beforeInsert*, *afterUpdate*, etc.) run based on the current context and switch for the object. These methods provide the actual logic for each context.
-3. **Finally Method**:The *andFinally* method runs at the end of each context, providing a location for any wrap-up work that needs to be done.
+### SObjectHandler ###
 
-Each of these methods are defined as virtual (allowing them to be overridden) and contain no logic in the default implementation.
+The *execute* instance method controls the actual flow of logic within the trigger. It executes checks to the Trigger Panel to determine if specific functions should be run (see Trigger Panel). It also provides global error handling for logic within an object-specific dispatcher (see Error Handling). The execute method references other instance methods for each context. Each of these methods are defined as virtual (allowing them to be overridden) and contain no logic in the default implementation.
 
-Also available on the SObjectDispatcher are three member variables: the object typeName (with underscores removed), the newList from the trigger context, and the oldMap from the trigger context.
+Also available on the SObjectHandler is one member variable: the object typeName (with underscores removed).
 
-### Object-Specific Dispatchers ###
+### Object-Specific Handlers  ###
 
-Each object-specific dispatcher extends the standard SObjectDispatcher class, inheriting all methods from the default implementation. Adding override methods allows the customization of any of these methods. *Please note that all overridden methods must have the 'global' access modifier on them in order to function properly.*
-
-Also included are some common helper methods that access and cast the new and old records for easy access in the org. These methods are included on each object-specific dispatcher as there are limitations to dynamically casting records to a specific type in Salesforce. Below are the template object-specific dispatcher and test class.
+Each object-specific dispatcher extends the standard SObjectHandler class, inheriting all methods from the default implementation. Adding override methods allows the customization of any of these methods. *Please note that all overridden methods must have the 'global' access modifier on them in order to function properly.* Note that these methods should be treated as static and no additional member variables should typically be added directly to a handler.
 
 ```
 #!apex
-global class {{ dispatcher_name }} extends EBEDU.SObjectDispatcher {
-    
+global class {{ handler_name }} extends EDHU.SObjectHandler {
+
     /**
      * The before insert functionality on the {{ object_name }} object
-     *
-     * @return 
      */
     global override void beforeInsert(){
         System.debug('Overriden');
     }
 
-    /**
-     * Utility method to transform the Trigger.newList to the appropriate SObject type.
-     *
-     * @return A list containing the new {{ object_name }} objects.
-     */
-    public List<{{ object_name }}> getNewList(){
-        if(newList != null){
-            return (List<{{ object_name }}>) newList;
-        }
-        return null;
-    }
-
-    /**
-     * Utility method to transform the Trigger.oldMap into the appropriate SObject type.
-     *
-     * @return A map containing the old {{ object_name }} objects by Id.
-     */
-    public Map<Id, {{ object_name }}> getOldMap(){
-        if(oldMap != null){
-            Map<Id, {{ object_name }}> oMap = new Map<Id, {{ object_name }}>();
-            oMap.putAll( (List<{{ object_name }}>) oldMap.values());
-            return oMap;
-        }
-        return null;
-    }
-
-    /**
-     * Utility method to transform the Trigger.newList to a map of the appropriate SObject type.
-     *
-     * @return A map containing the new {{ object_name }} objects by Id.
-     */
-    public Map<Id, {{ object_name }}> getNewMap(){
-        if(newList != null){
-            Map<Id, {{ object_name }}> newMap = new Map<Id, {{ object_name }}>();
-            newMap.putAll(getNewList()); 
-            return  newMap;
-        }
-        return null;
-    }
-
 }
-```
-
-
-```
-#!apex
-@isTest
-public class {{ test_class_name }} {
-
-    @isTest
-    public static void testUtilityMethodsValid(){
-        {{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
-        dispatch.newList = new List<{{ object_name }}>();
-        dispatch.oldMap = new Map<Id, {{ object_name }}>();
-
-        dispatch.getNewList();
-        dispatch.getNewMap();
-        dispatch.getOldMap();
-    }
-
-    @isTest
-    public static void testUtilityMethodsNull(){
-        {{ dispatcher_name }} dispatch = new {{ dispatcher_name }}();
-
-        dispatch.getNewList();
-        dispatch.getNewMap();
-        dispatch.getOldMap();
-    }
-
-}
-
 ```
 
 ### Error Handling ###
 
-A level of default error handling is built into the framework by default. This handling captures errors from within the instance method invocations and masks the error before presenting it to the user. This prevents users from seeing excessively long error messages and instead provide them with actionable instructions. This can be overridden on the 'Settings' custom setting, passing the raw errors to users for debugging purposes. These settings can be configured on an org-wide, profile, or per-user basis. For example, System Administrator profiles can be configured to always see raw errors.
+A level of default error handling is built into the framework by default. This handling can capture errors from within the instance method invocations and masks the error before presenting it to the user. This prevents users from seeing excessively long error messages and instead provide them with actionable instructions. This can be enabled on the 'Trigger Settings' custom setting, masking the raw errors to users except for debugging purposes. These settings can be configured on an org-wide, profile, or per-user basis. For example, System Administrator profiles can be configured to always see raw errors.
 
 ## Trigger Panel ##
 
@@ -202,18 +116,16 @@ The trigger panel provides admin-configurable control of trigger execution. Ther
 
 ### Admin Configuration ###
 
-An administrator is able to configure the initial state of the breakers and switches by editing the EBEDU.TriggerPanel custom setting. The name of the custom setting record should be the sObject name following the same naming convention as the dispatcher (removing all '_' characters). There is no way to set the main breaker as an admin.
+An administrator is able to configure the initial state of the breakers and switches by editing the EDHU.Trigger_Panel__mdt custom metadata records. The name of the custom metadata record should be the same as the typeName on the handler (typically the sObject name following the same naming convention as the dispatcher a.k.a. removing all '_' characters). Trigger panels are grouped into Trigger Configurations, that can be assigned on a default, profile, or per-user basis. If not configuration is specified the 'Default' configuration is used. The main breaker is configured on the Trigger Settings record as 'Bypass Triggers'.
 
-### Main Breaker ###
+### Main Breaker, Object Breakers, and Switches ###
 
-The main breaker is only editable via apex.
-
-Turning off the main breaker disables all triggers.
+Turning off the main breaker programatically will disables all triggers for the duration of the execution context. If set via configuration, it is set for all execution contexts for the configured users.
 
 ```
 #!Apex
 //Turn off main breaker
-EBEDU.TriggerPanel.setMainBreaker(false);
+EDHU.TriggerPanel.setMainBreaker(false);
 
 ```
 
@@ -222,7 +134,7 @@ The main breaker can also be turned back on
 ```
 #!Apex
 //Turn on main breaker
-EBEDU.TriggerPanel.setMainBreaker(true);
+EDHU.TriggerPanel.setMainBreaker(true);
 
 ```
 
@@ -231,12 +143,10 @@ And reverted
 ```
 #!Apex
 //Revert main breaker
-EBEDU.TriggerPanel.revertMainBreaker(true);
+EDHU.TriggerPanel.revertMainBreaker();
 
 ```
 
-### Breakers ###
-### Switches ###
 ### Revert Functions ###
 
 Revert function return the status of a switch or breaker back to the *immediate* prior status. It does not keep a history stack in any way.

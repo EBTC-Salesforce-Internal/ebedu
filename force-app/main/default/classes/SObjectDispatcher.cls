@@ -1,20 +1,25 @@
 global virtual class SObjectDispatcher {
 
+    /**
+     * Static map containing the singleton instances of the
+     * handlers as they are created and used.
+     */
     private static Map<String, SObjectHandler> handlerMap;
 
+    /**
+     * Static initialization of the dispatcher static members.
+     */
     static {
         handlerMap = new Map<String, SObjectHandler>();
     }
 
     /**
-     * This method constructs and initializes the proper sObject dispatcher based upon the
-     * data input (newList and oldMap).  The dispatcher is chosen by formula by finding the
-     * sObject type name, removing all '_' characters, prepending 'EB_', and appending
-     * 'Dispatcher'.  For example: My_Custom_Object__c => EB_MyCustomObjectcDispatcher'
+     * This method constructs and initializes the proper sObject handler based upon the
+     * typeName input.  The handler is chosen by formula by appending the type name with
+     * 'Handler'.  For example: MyCustomObject => MyCustomObjectHandler'
      *
-     * @param  newList List of sObjects, typically equivalent to Trigger.newList
-     * @param  oldMap  Map of sObjects, typically equivalent to Trigger.oldMap
-     * @return
+     * @param  typeName
+     * @return SObjectHandler
      */
     global static SObjectHandler init(String typeName){
         try{
@@ -22,8 +27,8 @@ global virtual class SObjectDispatcher {
                 System.Type t = Type.forName(typeName + 'Handler');
 
                 if(t == null){
-                    if(typeName == 'Exception'){
-                        throw new SObjectException('Triggers are not supported on Exception object');
+                    if(typeName == 'ExceptionValue'){
+                        throw new SObjectException('Triggers are not supported on ExceptionValue object');
                     }
                     return null;
                 }
@@ -34,8 +39,8 @@ global virtual class SObjectDispatcher {
             return handlerMap.get(typeName);
         }catch(Exception ex){
             if(getMaskExceptions()){
-                EBEDU_Exception ebex = new EBEDU_Exception();
-                ebex.setMessage(System.Label.EBEDU_Init_Error_Message);
+                EDHU_Exception ebex = new EDHU_Exception();
+                ebex.setMessage(System.Label.EDHU_Init_Error_Message);
                 throw ebex;
             }
 
@@ -43,6 +48,9 @@ global virtual class SObjectDispatcher {
         }
     }
 
+    /**
+     * Method returns the users configured setting of whether to override the error message (true)
+     */
     @testVisible
     private static Boolean getMaskExceptions(){
         return Trigger_Settings__c.getInstance().Mask_Detailed_Exceptions__c;
@@ -69,13 +77,13 @@ global virtual class SObjectDispatcher {
                     if(ex.getDmlFieldNames(i).isEmpty() == false){
                         errorString += '[' + typeName + '.' + String.join(ex.getDmlFieldNames(i),',') + ']. ';
                     }
-                    errorString += System.Label.EBEDU_Generic_DML_Error_Message;
+                    errorString += System.Label.EDHU_Generic_DML_Error_Message;
 
                     objects[index].addError(errorString);
                 }
             }else{
                 for(SObject obj:objects){
-                    obj.addError(System.Label.EBEDU_Generic_Error_Message);
+                    obj.addError(System.Label.EDHU_Generic_Error_Message);
                 }
             }
             return;
@@ -84,7 +92,7 @@ global virtual class SObjectDispatcher {
         throw ex;
     }
 
-    public class EBEDU_Exception extends Exception{
+    global class EDHU_Exception extends Exception{
 
     }
 }

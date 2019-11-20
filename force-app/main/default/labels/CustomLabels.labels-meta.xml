@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
     <labels>
-        <fullName>EBEDU_Generic_Error_Message</fullName>
+        <fullName>EDHU_Generic_Error_Message</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>EBEDU Generic Error Message</shortDescription>
+        <shortDescription>EDHU Generic Error Message</shortDescription>
         <value>An exception has occurred while saving a record. If error persists, please contact your system administrator.</value>
     </labels>
     <labels>
-        <fullName>EBEDU_Generic_DML_Error_Message</fullName>
+        <fullName>EDHU_Generic_DML_Error_Message</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>EBEDU Generic DML Error Message</shortDescription>
+        <shortDescription>EDHU Generic DML Error Message</shortDescription>
         <value>If error persists, please contact your system administrator.</value>
     </labels>
     <labels>
-        <fullName>EBEDU_Init_Error_Message</fullName>
+        <fullName>EDHU_Init_Error_Message</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>EBEDU Init Error Message</shortDescription>
+        <shortDescription>EDHU Init Error Message</shortDescription>
         <value>An exception occurred during handler initialization. Please contact your system administrator.</value>
     </labels>
 </CustomLabels>

@@ -2,10 +2,9 @@
 public class SObjectHandlerTest {
 
     /**
-     * Test all contexts of the execute method (including invalid)
+     * Test all contexts of the execute method
      *
-     * Expected behavior: Each of the context methods run.  The invalid context will
-     * not run as there is no switch for it in the TriggerPanel.
+     * Expected behavior: Each of the context methods run.
      *
      * Note: There is no good way I have found to make sure the methods actually run
      * except to see the code coverage.
@@ -29,8 +28,7 @@ public class SObjectHandlerTest {
     /**
      * Test the execute method when a TriggerPanel breaker is false
      *
-     * Expected Behavior: The prep, context, and finally methods are not run as the breaker short
-     * circuits execution.
+     * Expected Behavior: The methods should not run.
      *
      * Note: There is no good way I have found to make sure the methods actually run
      * except to see the code coverage.
@@ -43,6 +41,7 @@ public class SObjectHandlerTest {
 
         Test.startTest();
         handler.execute(TriggerOperation.BEFORE_INSERT, null, null);
+        handler.execute(TriggerOperation.AFTER_INSERT, null, null);
         Test.stopTest();
     }
 
@@ -50,8 +49,7 @@ public class SObjectHandlerTest {
     /**
      * Test the execute method when a TriggerPanel switch is false
      *
-     * Expected Behavior: The prep and finally methods are run but the context method
-     * is not run as the switch short circuits execution.
+     * Expected Behavior: The method should not run.
      *
      * Note: There is no good way I have found to make sure the methods actually run
      * except to see the code coverage.
@@ -67,6 +65,12 @@ public class SObjectHandlerTest {
         Test.stopTest();
     }
 
+    /**
+     * Test the exception handling when only a new list is present.
+     *
+     * Expected Behavior: The exception method should process normally.
+     *
+     */
     @isTest
     public static void testHandleException_NewList(){
         Trigger_Settings__c settings = new Trigger_Settings__c();
@@ -77,34 +81,43 @@ public class SObjectHandlerTest {
 
         Exception excep;
 
+        List<Account> accs = new List<Account>();
         try{
-            Integer value = 1 / 0;
+            Account a1 = new Account();
+            a1.Name = 'Test Account 1';
+            accs.add(a1);
+
+            Account a2 = new Account();
+            a2.Name = 'Test Account 1';
+            a2.AccountNumber = '12345678901234567890123456789012345678901';
+            accs.add(a2);
+
+            insert accs;
+            //This throws a DML error due to the field size limit of 40 on AccountNumber.
         }catch(Exception ex){
             excep = ex;
         }
-
-        List<SObject> objs = new List<SObject>();
-        Account a = new Account();
-        a.Name = 'Test Account';
-        objs.add(a);
-
-        Map<Id, SObject> objMap = new Map<Id, SObject>();
-        objMap.putAll(objs);
 
         SObjectHandler handler = SObjectDispatcher.init('SObject');
 
         Test.startTest();
 
-        handler.handleException(TriggerOperation.AFTER_INSERT, excep, objs, objMap);
+        handler.handleException(TriggerOperation.AFTER_INSERT, excep, accs, null);
 
         Test.stopTest();
 
         System.assertEquals(true, ApexPages.hasMessages());
-        System.assertEquals(System.Label.EBEDU_Generic_Error_Message, ApexPages.getMessages()[0].getSummary());
+        System.assert(ApexPages.getMessages()[1].getSummary().contains(System.Label.EDHU_Generic_DML_Error_Message));
     }
 
+    /**
+     * Test the exception handling when only a old list is present.
+     *
+     * Expected Behavior: The exception method should process normally.
+     *
+     */
     @isTest
-    public static void testHandleException_OldMap(){
+    public static void testHandleException_OldList(){
         Trigger_Settings__c settings = new Trigger_Settings__c();
         settings.Trigger_Configuration__c = 'TestConfiguration';
         settings.SetupOwnerId = UserInfo.getUserId();
@@ -113,29 +126,32 @@ public class SObjectHandlerTest {
 
         Exception excep;
 
+        List<Account> accs = new List<Account>();
         try{
-            Integer value = 1 / 0;
+            Account a1 = new Account();
+            a1.Name = 'Test Account 1';
+            accs.add(a1);
+
+            Account a2 = new Account();
+            a2.Name = 'Test Account 1';
+            a2.AccountNumber = '12345678901234567890123456789012345678901';
+            accs.add(a2);
+
+            insert accs;
+            //This throws a DML error due to the field size limit of 40 on AccountNumber.
         }catch(Exception ex){
             excep = ex;
         }
-
-        List<SObject> objs = new List<SObject>();
-        Account a = new Account();
-        a.Name = 'Test Account';
-        objs.add(a);
-
-        Map<Id, SObject> objMap = new Map<Id, SObject>();
-        objMap.putAll(objs);
 
         SObjectHandler handler = SObjectDispatcher.init('SObject');
 
         Test.startTest();
 
-        handler.handleException(TriggerOperation.AFTER_DELETE, excep, objs, objMap);
+        handler.handleException(TriggerOperation.AFTER_DELETE, excep, null, accs);
 
         Test.stopTest();
 
         System.assertEquals(true, ApexPages.hasMessages());
-        System.assertEquals(System.Label.EBEDU_Generic_Error_Message, ApexPages.getMessages()[0].getSummary());
+        System.assert(ApexPages.getMessages()[1].getSummary().contains(System.Label.EDHU_Generic_DML_Error_Message));
     }
 }

@@ -224,6 +224,36 @@ public class TriggerPanelTest {
     }
 
     /**
+     * Testing the 'RevertBreaker' function with a record in the database
+     *
+     * Expected behavior: When requested, the value initial value is returned.
+     */
+    @isTest
+    public static void testRevertBreakerFromNull(){
+        Test.startTest();
+        TriggerPanel.revertBreaker('Account');
+        System.assertEquals(true, TriggerPanel.getBreaker('Account'));
+
+        Test.stopTest();
+    }
+
+    /**
+     * Testing the 'RevertBreaker' function with a record in the database
+     *
+     * Expected behavior: When requested, the value initial value is returned.
+     */
+    @isTest
+    public static void testRevertSwitchFromNull(){
+        Test.startTest();
+
+        System.assertEquals(false, TriggerPanel.getSwitch('TestPanel', 'AFTER_INSERT'));
+        TriggerPanel.revertSwitch('TestPanel', 'AFTER_INSERT');
+        System.assertEquals(false, TriggerPanel.getSwitch('TestPanel', 'AFTER_INSERT'));
+
+        Test.stopTest();
+    }
+
+    /**
      * Testing the 'GetSwitch' function with no record in the database
      *
      * Expected behavior: When requested, the default record will be

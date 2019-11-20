@@ -52,12 +52,14 @@ global virtual class SObjectHandler {
 
     /**
      * Generic execute method accepts the 'context' parameter and processes the required methods accordingly.
-     * Control of the methods can be modified by using the EB_TriggerPanel custom setting values.
+     * Control of the methods can be modified by using the TriggerPanel custom setting values.
      *
      * If no record is found in the setting for the given sObject, the default behavior is 'true' or run
      * all methods. Any call to a 'set' function will return false and have no effect.
      *
      * @param  context The context for which to execute the function.
+     * @param  newList The newList value received from the trigger.
+     * @param  oldMap  The oldMap value received from the trigger.
      * @return
      */
     global virtual void execute(TriggerOperation context, List<SObject> newList, Map<Id, SObject> oldMap){
@@ -83,13 +85,18 @@ global virtual class SObjectHandler {
             }
 
         }catch(Exception ex){
-            this.handleException(context, ex, newList, oldMap);
+            this.handleException(context, ex, newList, oldMap.values());
         }
     }
 
-    global virtual void handleException(TriggerOperation context, Exception ex, List<SObject> newList, Map<Id, SObject> oldMap){
+    /**
+     * This method handles the exceptions thrown during the execute method, directing them to the standard implementation
+     * provided by the framework. It also detects the context to ensure that a valid list of sObjects is available to the
+     * exception implementation. This method may be overriden by a specific handler.
+     */
+    global virtual void handleException(TriggerOperation context, Exception ex, List<SObject> newList, List<SObject> oldList){
         if(context.name().contains('_DELETE')){
-            SObjectDispatcher.handleException(typeName, ex, oldMap.values());
+            SObjectDispatcher.handleException(typeName, ex, oldList);
         }else{
             SObjectDispatcher.handleException(typeName, ex, newList);
         }

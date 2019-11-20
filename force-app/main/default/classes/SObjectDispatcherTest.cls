@@ -35,10 +35,8 @@ public class SObjectDispatcherTest {
     /**
      * Test the init exception process
      *
-     * Expected behavior: Triggers are not allowed on custom settings, and this is
-     * only in Test behavior, so the added code to force a break on a trigger of this
-     * type will not impact destination organizations.  Highlights the error process
-     * if any where to occur.
+     * Expected behavior: Forced behavior on 'ExceptionValue' typeName. Highlights the error process
+     * if it were ever to occur. Also, don't use 'ExceptionValue' as a typeName in production.
      */
     @isTest
     public static void testInitException(){
@@ -46,7 +44,7 @@ public class SObjectDispatcherTest {
 
         Test.startTest();
         try{
-            SObjectHandler handler = SObjectDispatcher.init('Exception');
+            SObjectHandler handler = SObjectDispatcher.init('ExceptionValue');
         }catch(Exception e){
             ex = e;
         }
@@ -61,7 +59,7 @@ public class SObjectDispatcherTest {
      * Test the init exception process when masking is enabled
      *
      * Expected behavior: The error is thrown, but masked by a generic error message
-     * with an EBEDU exception type.
+     * with an EDHU exception type.
      */
     @isTest
     public static void testInitException_Masked(){
@@ -71,20 +69,18 @@ public class SObjectDispatcherTest {
         settings.Mask_Detailed_Exceptions__c = true;
         insert settings;
 
-        Map<Id, Trigger_Settings__c> panelMap = new Map<Id, Trigger_Settings__c>();
-
         Exception ex;
 
         Test.startTest();
         try{
-            SObjectHandler handler = SObjectDispatcher.init('Exception');
+            SObjectHandler handler = SObjectDispatcher.init('ExceptionValue');
         }catch(Exception e){
             ex = e;
         }
         Test.stopTest();
 
         System.assertNotEquals(null, ex);
-        System.assertEquals('EBEDU.SObjectDispatcher.EBEDU_Exception', ex.getTypeName());
+        System.assertEquals('edhu.SObjectDispatcher.EDHU_Exception', ex.getTypeName());
         System.assert(ex.getMessage().contains('Triggers are not supported') == false);
     }
 
@@ -117,7 +113,7 @@ public class SObjectDispatcherTest {
     /**
      * Testing the exception process when masking is enabled
      *
-     * Expected behavior: The same error that was originally encountered should be re-thrown
+     * Expected behavior: The original error should be masked
      */
     @isTest
     public static void testHandleException_Masked(){
@@ -147,13 +143,14 @@ public class SObjectDispatcherTest {
         Test.stopTest();
 
         System.assertEquals(true, ApexPages.hasMessages());
-        System.assertEquals(System.Label.EBEDU_Generic_Error_Message, ApexPages.getMessages()[0].getSummary());
+        System.assertEquals(System.Label.EDHU_Generic_Error_Message, ApexPages.getMessages()[0].getSummary());
     }
 
     /**
      * Testing the exception process when masking is enabled and a DML operation
      *
-     * Expected behavior: The same error that was originally encountered should be re-thrown
+     * Expected behavior: The error that was originally encountered should be masked
+     * and details should be added to the specific sObject.
      */
     @isTest
     public static void testHandleException_MaskedDML(){
@@ -189,7 +186,7 @@ public class SObjectDispatcherTest {
         Test.stopTest();
 
         System.assertEquals(true, ApexPages.hasMessages());
-        System.assert(ApexPages.getMessages()[1].getSummary().contains(System.Label.EBEDU_Generic_DML_Error_Message));
+        System.assert(ApexPages.getMessages()[1].getSummary().contains(System.Label.EDHU_Generic_DML_Error_Message));
     }
 
 }

@@ -5,23 +5,23 @@ global class TriggerPanel {
      */
     @testVisible
     private static Boolean mainSwitch;
-    
-    
+
+
     /**
      * Private variable that maintains the panel settings during the execution context.
      */
     @testVisible
     private static Map<String, Trigger_Panel__mdt> panelMap;
-    
+
     /*
-     * Private variable that maintains the previous status of switches and breakers 
+     * Private variable that maintains the previous status of switches and breakers
      * (caputred during set method call).
-     */    
+     */
     @testVisible
     private static Map<String, Boolean> stateHistory= new Map<String, Boolean>();
-    
+
     /**
-     * Global accessor for the main switch. This controls the execution of all triggers collectively. 
+     * Global accessor for the main switch. This controls the execution of all triggers collectively.
      */
     global static Boolean getMainBreaker(){
         if(mainSwitch == null){
@@ -29,7 +29,7 @@ global class TriggerPanel {
         }
         return mainSwitch;
     }
-    
+
     /*
      * Global settor for the main switch. This controls the execution of all triggers collectively.
      */
@@ -37,14 +37,14 @@ global class TriggerPanel {
         setPriorStatus('Main', null, getMainBreaker());
         mainSwitch = active;
     }
-    
+
     /**
-     * Global method for reverting the main switch the the immediately previous value. Defaults to true. 
+     * Global method for reverting the main switch the the immediately previous value. Defaults to true.
      */
     global static void revertMainBreaker(){
         setMainBreaker(getPriorStatus('Main', null));
     }
-    
+
     /**
      * Global accessor for single TriggerPanel records. If no record is found, a default
      * is created with breaker and switches set to true.
@@ -70,9 +70,9 @@ global class TriggerPanel {
 
         if(panelMap == null){
             panelMap = new Map<String, Trigger_Panel__mdt>();
-            for(Trigger_Panel__mdt panel:[  SELECT  Id, DeveloperName, Breaker__c, Before_Insert__c, After_Insert__c, 
-                                                    Before_Update__c, After_Update__c, Before_Delete__c, After_Delete__c, 
-                                                    After_Undelete__c 
+            for(Trigger_Panel__mdt panel:[  SELECT  Id, DeveloperName, Breaker__c, Before_Insert__c, After_Insert__c,
+                                                    Before_Update__c, After_Update__c, Before_Delete__c, After_Delete__c,
+                                                    After_Undelete__c
                                             FROM    Trigger_Panel__mdt
                                             WHERE   Trigger_Configuration__r.DeveloperName = :configurationName]){
                 panelMap.put(panel.DeveloperName, panel);
@@ -80,9 +80,9 @@ global class TriggerPanel {
         }
         return panelMap;
     }
-    
+
     /**
-     * Returns the related value of the EB_TriggerPanel record for the given context.  If there is
+     * Returns the related value of the TriggerPanel record for the given context.  If there is
      * no record for the object type, and no sets are called previously in the code, the default
      * return is true.
      *
@@ -95,14 +95,14 @@ global class TriggerPanel {
     }
 
     /**
-     * Sets the related value of the EB_TriggerPanel record for the given context. If there is no
-     * record in the database for this sObject type, a temporary record (all options set to true 
+     * Sets the related value of the TriggerPanel record for the given context. If there is no
+     * record in the database for this sObject type, a temporary record (all options set to true
      * by default) will be created for this transaction only. The supplied value will then be set.
      *
      * @param  typeName The string value of the object type with all '_' characters removed.
      * @param  context  The trigger context value with no spaces.  For example, 'beforeInsert'.
      * @param  active   The desired value to set.
-     * 
+     *
      * @return          The prior value of the switch.
      */
     global static void setSwitch(String typeName, String context, Boolean active){
@@ -116,9 +116,9 @@ global class TriggerPanel {
     global static void revertSwitch(String typeName, String context){
         setSwitch(typeName, context, getPriorStatus(typeName, context));
     }
-    
+
     /**
-     * Returns the breaker value of the EB_TriggerPanel record.
+     * Returns the breaker value of the TriggerPanel record.
      *
      * @param typeName The string value of the object type with all '_' characters removed.
      * @return         The return value indicates whether the trigger breaker is set to on or off.
@@ -128,8 +128,8 @@ global class TriggerPanel {
     }
 
     /**
-     * Sets the breaker value of the EB_TriggerPanel record.  If there is no record in the 
-     * database for this sObject type, a temporary record (all options set to true by default) 
+     * Sets the breaker value of the TriggerPanel record.  If there is no record in the
+     * database for this sObject type, a temporary record (all options set to true by default)
      * will be created for this transaction only. The supplied value will then be set.
      *
      * @param  typeName The string value of the object type with all '_' characters removed.
@@ -146,11 +146,11 @@ global class TriggerPanel {
     global static void revertBreaker(String typeName){
         setBreaker(typeName, getPriorStatus(typeName, null));
     }
-    
+
     /**
-     * Sets the related value of the EB_TriggerPanel record for all contexts. If there is no 
-     * record in the database for this sObject type, a temporary record (all options set to 
-     * true by default) will be created for this transaction only. The supplied value will 
+     * Sets the related value of the EB_TriggerPanel record for all contexts. If there is no
+     * record in the database for this sObject type, a temporary record (all options set to
+     * true by default) will be created for this transaction only. The supplied value will
      * then be set.
      *
      * @param  typeName The string value of the object type with all '_' characters removed.
@@ -166,7 +166,7 @@ global class TriggerPanel {
         setSwitch(typeName, 'AFTER_DELETE', active);
         setSwitch(typeName, 'AFTER_UNDELETE', active);
     }
-    
+
     /**
      * Global method for accessing the prior state of a switch. This method does not remove
      * or change the prior status recorded.
@@ -182,21 +182,21 @@ global class TriggerPanel {
                     priorValue = getBreaker(typeName);
                 }
             }else{
-                getSwitch(typeName, context);
+                priorValue = getSwitch(typeName, context);
             }
         }
         return priorValue;
     }
-    
+
     /**
      * Global method for saving the prior state of a switch or breaker.
      */
     global static void setPriorStatus(String typeName, String context, Boolean active){
         stateHistory.put(buildKey(typeName, context), active);
     }
-    
+
     /*
-     * Private method that converts the typeName and context into the history map key. 
+     * Private method that converts the typeName and context into the history map key.
      */
     private static String buildKey(String typeName, String context){
         if(context == null || context == ''){
@@ -204,9 +204,9 @@ global class TriggerPanel {
         }
         return typeName + '_' + context;
     }
-    
+
     /**
-     * Removes the EB_TriggerPanel record for the given typeName from the cached map of panels.
+     * Removes the TriggerPanel record for the given typeName from the cached map of panels.
      *
      * @param  typeName The string value of the object type with all '_' characters removed.
      * @return
@@ -214,9 +214,9 @@ global class TriggerPanel {
     global static void reset(String typeName){
         getAllPanels().remove(typeName);
     }
-    
+
     /**
-     * Resets the map of EB_TriggerPanel records to only those found in the database.
+     * Resets the map of TriggerPanel records to only those found in the database.
      *
      * @param  typeName The string value of the object type with all '_' characters removed.
      * @return
